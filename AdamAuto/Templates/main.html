@@ -33,6 +33,7 @@
     <link rel="stylesheet" href="{% static 'css/flaticon.css' %}" />
     <link rel="stylesheet" href="{% static 'css/icomoon.css' %}" />
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
       .navbar {
         position: fixed;
@@ -40,6 +41,9 @@
         width: 100%;
         z-index: 1000; /* Ensure it stays on top of other elements */
         background-color: rgba(0, 0, 0, 0.8); /* Optional: Semi-transparent background */
+      }
+      #chat-toggle-btn:hover {
+        transform: scale(1.1);
       }
     </style> 
   </head>
@@ -187,5 +191,336 @@
           })
         })
       </script>
+      
+    <!-- Chatbot Integration -->
+    <div id="chatbot" style="position: fixed; bottom: 20px; right: 20px; width: 300px; max-width: 90vw; border: 1px solid #ccc; border-radius: 10px; background-color: white; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+      <!-- Header -->
+      <div style="padding: 12px; background-color: #000000; color: white; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 14px;">
+          <span style="color: #999999;">Adam</span>
+          <span style="color: #ffc107;">Automotive</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span id="user-greeting" style="font-size: 12px;"></span>
+          <button onclick="refreshChat()" style="background: none; border: none; color: white; font-size: 18px;">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button onclick="toggleChatbot()" style="background: none; border: none; color: white; font-size: 18px;">×</button>
+        </div>
+      </div>
+      
+      <!-- Welcome Message -->
+      <div style="padding: 15px; text-align: left;">
+        <h4 style="margin: 0; font-size: 16px;">Hello, I am</h4>
+        <h2 style="margin: 5px 0; font-size: 24px;">
+          <span style="color: #999999;">Adam</span>
+          <span style="color: #ffc107;">Automotive</span>
+        </h2>
+        <p style="margin: 5px 0; color: #666; font-size: 14px;">Your True Automotive Assistant</p>
+      </div>
+
+      <!-- Chat Messages -->
+      <div id="chatbot-messages" style="height: 200px; overflow-y: auto; padding: 10px; font-family: Arial, sans-serif; font-size: 14px;">
+        <!-- Messages will appear here -->
+      </div>
+
+      <!-- Input Area -->
+      <div style="padding: 10px; display: flex; gap: 5px;">
+        <input type="text" id="chatbot-input" placeholder="Start With Your Name..." 
+               style="flex: 1; padding: 8px; border-radius: 20px; border: 1px solid #ccc; font-size: 14px;" />
+        <button onclick="sendMessage()" 
+                style="background-color: #000000; color: white; border: none; border-radius: 20px; padding: 8px 15px; cursor: pointer;">
+          Send
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat Toggle Button -->
+    <button id="chat-toggle-btn" onclick="toggleChatbot()" 
+            style="position: fixed; bottom: 20px; right: 20px; 
+                   background-color: #000000; 
+                   color: white; 
+                   border: none; 
+                   border-radius: 50%; 
+                   width: 60px; 
+                   height: 60px; 
+                   cursor: pointer; 
+                   z-index: 1000;
+                   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                   display: flex;
+                   align-items: center;
+                   justify-content: center;
+                   transition: transform 0.3s ease;">
+        <i class="fas fa-comments" style="font-size: 24px;"></i>
+    </button>
+
+    <!-- Add Google AI SDK -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+      const API_KEY = 'AIzaSyD1QO8FrKu4g9GcLu5APcYwlaqwjh0yrD8';
+      const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+
+      let userName = '';
+      let isFirstMessage = true;
+
+      function toggleChatbot() {
+        const chatbot = document.getElementById('chatbot');
+        const toggleBtn = document.getElementById('chat-toggle-btn');
+        
+        if (chatbot.style.display === 'none') {
+          chatbot.style.display = 'block';
+          toggleBtn.style.display = 'none';
+          if (isFirstMessage) {
+            const messages = document.getElementById('chatbot-messages');
+            messages.innerHTML = `<div><strong>Bot:</strong> Please enter your name to get started.</div>`;
+          }
+        } else {
+          chatbot.style.display = 'none';
+          toggleBtn.style.display = 'block';
+        }
+      }
+
+      function redirectToService() {
+        window.location.href = "{% url 'bookservice_dtl' %}";
+      }
+
+      function redirectToCars() {
+        window.location.href = "{% url 'userdisplaycars_dtl' %}";
+      }
+     
+
+      async function sendMessage() {
+        const input = document.getElementById('chatbot-input');
+        const message = input.value.trim();
+        
+        if (!message) return;
+
+        const messagesDiv = document.getElementById('chatbot-messages');
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Clear input immediately
+        input.value = '';
+
+        // Add user message
+        messagesDiv.innerHTML += `
+          <div style="display: flex; justify-content: flex-end; margin: 8px 0;">
+            <div style="max-width: 80%;">
+              <div style="background-color: #000000; color: white; padding: 8px 12px; border-radius: 12px 12px 0 12px; margin-bottom: 2px;">
+                ${message}
+              </div>
+              <div style="text-align: right; font-size: 10px; color: #666;">
+                ${timestamp}
+              </div>
+            </div>
+          </div>`;
+
+        // Show typing indicator
+        messagesDiv.innerHTML += `
+          <div id="typing-indicator" style="display: flex; justify-content: flex-start; margin: 8px 0;">
+            <div style="max-width: 80%;">
+              <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+              </div>
+              <div style="font-size: 10px; color: #666;">
+                ${timestamp}
+              </div>
+            </div>
+          </div>`;
+
+        // Scroll to show typing indicator
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        if (isFirstMessage) {
+          // Handle first message (name input)
+          userName = message;
+          isFirstMessage = false;
+          
+          // Remove typing indicator
+          const typingIndicator = document.getElementById('typing-indicator');
+          if (typingIndicator) {
+            typingIndicator.remove();
+          }
+
+          // Show welcome message with delayed points
+          const welcomeMessage = `Hi ${userName}, Welcome to Adam Automotive! How can I assist you today?`;
+          const points = [
+            { text: 'Our luxury car collection', url: "{% url 'userdisplaycars_dtl' %}" },
+            { text: 'Booking a service', url: "{% url 'bookservice_dtl' %}" },
+            { text: 'Selling your car', url: "{% url 'sellcar_dtl' %}" },
+            { text: 'Car pricing and availability', url: "{% url 'userdisplaycars_dtl' %}" },
+            { text: 'Liked List', url: "{% url 'liked_list' %}" },
+            { text: 'Account Details', url: "{% url 'account_dtl' %}" },
+            { text: 'Requests', url: "{% url 'request_dtl' %}" }
+          ];
+
+          messagesDiv.innerHTML += `
+            <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+              <div style="max-width: 80%;">
+                <div style="background-color: #f0f0f0; padding: 8px 12px; border-radius: 12px 12px 12px 0; margin-bottom: 2px;">
+                  <div id="welcome-text">${welcomeMessage}</div>
+                  <div id="points-container"></div>
+                </div>
+                <div style="font-size: 10px; color: #666;">
+                  ${timestamp}
+                </div>
+              </div>
+            </div>`;
+
+          // Update the points display code
+          const pointsContainer = document.getElementById('points-container');
+          points.forEach((point, index) => {
+            setTimeout(() => {
+              pointsContainer.innerHTML += `
+                <div style="margin-top: 5px;">
+                  • <a href="${point.url}" 
+                       style="color: #007bff; 
+                              text-decoration: none; 
+                              cursor: pointer;"
+                       onmouseover="this.style.textDecoration='underline'"
+                       onmouseout="this.style.textDecoration='none'">
+                    ${point.text}
+                  </a>
+                </div>`;
+              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, (index + 1) * 500);
+          });
+          
+          // Update input placeholder
+          input.placeholder = "Type your message here...";
+        } else {
+          // Regular conversation handling
+          try {
+            // Prepare context for Gemini AI
+            const context = `
+              Context about Adam Automotive:
+              - Luxury used car dealership
+              - Services: Car sales, Car service/maintenance, Car buying
+              - Working hours: Monday-Sunday, 9am-10pm
+              - Location: Adam Towers, Edappally Kochi, Kerala - 683544
+              - Features: Premium car collection including BMW, Mercedes, Audi
+              - Services include car maintenance, buying and selling cars
+              - All cars are accident-free and flood-free
+              
+              User query: ${message}
+              
+              Please provide a helpful, natural response as a car dealership assistant. Keep responses concise and professional.
+            `;
+
+            const response = await fetch(API_URL + '?key=' + API_KEY, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{
+                    text: context
+                  }]
+                }]
+              })
+            });
+
+            const data = await response.json();
+            let botResponse = data.candidates[0].content.parts[0].text;
+
+            // Remove typing indicator before showing response
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+              typingIndicator.remove();
+            }
+
+            // Display bot response
+            messagesDiv.innerHTML += `
+              <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                <div style="max-width: 80%;">
+                  <div style="background-color: #f0f0f0; padding: 8px 12px; 
+                    border-radius: 12px 12px 12px 0; margin-bottom: 2px;">
+                    ${botResponse}
+                  </div>
+                  <div style="font-size: 10px; color: #666;">
+                    ${timestamp}
+                  </div>
+                </div>
+              </div>`;
+
+          } catch (error) {
+            // Remove typing indicator in case of error
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+              typingIndicator.remove();
+            }
+            
+            // Show error message
+            messagesDiv.innerHTML += `
+              <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                <div style="max-width: 80%;">
+                  <div style="background-color: #fff0f0; color: #d32f2f; padding: 8px 12px; border-radius: 12px 12px 12px 0;">
+                    I apologize, but I'm having trouble connecting right now. Please try again.
+                  </div>
+                  <div style="font-size: 10px; color: #666;">
+                    ${timestamp}
+                  </div>
+                </div>
+              </div>`;
+          }
+        }
+        
+        // Scroll to bottom after new messages
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      // Add Enter key handler
+      document.getElementById('chatbot-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
+
+      function refreshChat() {
+        const messagesDiv = document.getElementById('chatbot-messages');
+        const input = document.getElementById('chatbot-input');
+        
+        // Reset chat state
+        userName = '';
+        isFirstMessage = true;
+        
+        // Clear messages and reset input
+        messagesDiv.innerHTML = `<div><strong>Bot:</strong> Please enter your name to get started.</div>`;
+        input.value = '';
+        input.placeholder = "Start With Your Name...";
+      }
+    </script>
+
+    <style>
+      .typing-indicator {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 12px;
+        background: #f0f0f0;
+        border-radius: 12px 12px 12px 0;
+        margin-bottom: 2px;
+      }
+      
+      .typing-dot {
+        width: 6px;
+        height: 6px;
+        background: #666;
+        border-radius: 50%;
+        animation: typingAnimation 1s infinite ease-in-out;
+      }
+      
+      .typing-dot:nth-child(1) { animation-delay: 200ms; }
+      .typing-dot:nth-child(2) { animation-delay: 300ms; }
+      .typing-dot:nth-child(3) { animation-delay: 400ms; }
+      
+      @keyframes typingAnimation {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+        100% { transform: translateY(0px); }
+      }
+    </style>
   </body>
 </html>
