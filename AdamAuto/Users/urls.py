@@ -96,6 +96,8 @@ urlpatterns = [
     path('adminfeedback/', views.adminfeedback, name='adminfeedback'),
     path('deny-test-drive/', views.deny_test_drive, name='deny_test_drive'),
     path('perfect_car/', views.perfect_car, name='perfect_car'),
+    path('certified_cars/', views.certified_cars, name='certified_cars'),
+    path('sub_details/', views.sub_details, name='sub_details'),
 
 
     

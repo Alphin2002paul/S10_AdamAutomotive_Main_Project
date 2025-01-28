@@ -2624,3 +2624,9 @@ def deny_test_drive(request):
 def perfect_car(request):
     return render(request, 'perfect_car.html')
 
+def certified_cars(request):
+    return render(request, 'certified_cars.html')
+
+def sub_details(request):
+    return render(request, 'sub_details.html')
+

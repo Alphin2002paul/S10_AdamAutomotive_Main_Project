@@ -110,6 +110,189 @@
     .purchase-card {
       animation: fadeIn 0.5s ease-out;
     }
+
+    .badge-success {
+      background-color: #28a745;
+      color: white;
+    }
+    
+    .badge-danger {
+      background-color: #dc3545;
+      color: white;
+    }
+    
+    .badge {
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.8em;
+    }
+    
+    .list-unstyled li {
+      margin-bottom: 5px;
+      color: #333;
+    }
+    
+    .fe-icon-check {
+      color: #28a745;
+    }
+
+    .subscription-card {
+        max-width: 600px;
+        margin: 1.5rem auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+
+    .subscription-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .subscription-header {
+        background: linear-gradient(135deg, #0061f2 0%, #00a6ff 100%);
+        color: white;
+        padding: 1.2rem;
+        text-align: center;
+    }
+
+    .subscription-header h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+
+    .subscription-body {
+        padding: 1.5rem;
+    }
+
+    .subscription-info {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .info-label {
+        color: #666;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .status-badge.active {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .status-badge.inactive {
+        background: #ffebee;
+        color: #c62828;
+    }
+
+    .benefits-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 10px;
+    }
+
+    .benefits-section h4 {
+        color: #333;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .benefits-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .benefits-list li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0;
+        color: #555;
+    }
+
+    .benefits-list i {
+        color: #2e7d32;
+    }
+
+    .subscription-footer {
+        padding: 1.5rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        background: #f8f9fa;
+    }
+
+    .btn-change, .btn-cancel {
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-change {
+        background: #0061f2;
+        color: white;
+    }
+
+    .btn-change:hover {
+        background: #0056d6;
+        transform: translateY(-2px);
+    }
+
+    .btn-cancel {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+    }
+
+    /* Add animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .subscription-card {
+        animation: fadeIn 0.5s ease-out;
+    }
     </style>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -122,10 +305,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Add this line to include SweetAlert2 library -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   </head>
   <body>
    
-    <h1 align="center"> Enquirey Panel </h1><hr>
+    <h1 align="center"> Subscription Details Panel</h1><hr>
     <div class="container mt-5">
       {% if messages %}
       {% for message in messages %}
@@ -162,7 +347,7 @@
                 </div>
               </a>
               <a class="list-group-item" href="{% url 'account_edit' %}"><i class="fe-icon-user text-muted"></i>Edit Profile Settings</a>
-              <a class="list-group-item active" href="{% url 'enquirecar' %}">
+              <a class="list-group-item" href="{% url 'enquirecar' %}">
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
                     <i class="fe-icon-shopping-bag mr-1 text-muted"></i>
@@ -180,7 +365,7 @@
                   
                 </div>
               </a>
-              <a class="list-group-item" href="{% url 'sub_details' %}">
+              <a class="list-group-item active" href="{% url 'sub_details' %}">
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
                     <i class="fe-icon-shopping-bag mr-1 text-muted"></i>
@@ -203,40 +388,57 @@
         </div>
         <!-- New Purchase Cards with Pagination -->
         <div class="col-lg-8">
-          <h2 class="mb-4">Enquire About a Car</h2><hr>
-          <form id="enquireForm" method="post">
-            {% csrf_token %}
-            <div class="row">
-              <div class="col-md-6 form-group">
-                <label for="manufacturer">Manufacturer Name</label>
-                <input type="text" class="form-control" id="manufacturer" name="manufacturer" required>
-                <small class="error" id="manufacturer-error"></small>
+          <h2 class="mb-4 text-center">Subscription Details</h2><hr>
+          <!-- Subscription Card -->
+          <div class="subscription-card">
+            <div class="subscription-header">
+              <h3>Current Subscription Plan</h3>
+            </div>
+            <div class="subscription-body">
+              <div class="subscription-info">
+                <div class="info-item">
+                  <span class="info-label"><i class="fas fa-crown"></i> Type of Membership</span>
+                  <span class="info-value">{{ subscription.membership_type }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label"><i class="fas fa-calendar-alt"></i> Start Date</span>
+                  <span class="info-value">{{ subscription.start_date }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label"><i class="fas fa-hourglass-end"></i> Due Date</span>
+                  <span class="info-value">{{ subscription.due_date }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label"><i class="fas fa-info-circle"></i> Status</span>
+                  <span class="status-badge {% if subscription.is_active %}active{% else %}inactive{% endif %}">
+                    {{ subscription.status }}
+                  </span>
+                </div>
               </div>
-              <div class="col-md-6 form-group">
-                <label for="model_name">Model Name</label>
-                <input type="text" class="form-control" id="model_name" name="model_name" required>
-                <small class="error" id="model_name-error"></small>
+              <div class="benefits-section">
+                <h4><i class="fas fa-star"></i> Plan Benefits</h4>
+                <ul class="benefits-list">
+                  {% for benefit in subscription.benefits %}
+                  <li><i class="fas fa-check-circle"></i> {{ benefit }}</li>
+                  {% endfor %}
+                </ul>
               </div>
             </div>
-            <div class="row">
-              <div class="col-md-6 form-group">
-                <label for="model_year">Model Year</label>
-                <input type="number" class="form-control" id="model_year" name="model_year" required>
-                <small class="error" id="model_year-error"></small>
-              </div>
-              <div class="col-md-6 form-group">
-                <label for="color">Color</label>
-                <input type="text" class="form-control" id="color" name="color" required>
-                <small class="error" id="color-error"></small>
-              </div>
+            <div class="subscription-footer">
+              {% if subscription %}
+                <button class="btn-change">
+                  <i class="fas fa-exchange-alt"></i> Change Plan
+                </button>
+                <button class="btn-cancel" onclick="confirmCancellation()">
+                  <i class="fas fa-times-circle"></i> Cancel Subscription
+                </button>
+              {% else %}
+                <button class="btn-change">
+                  <i class="fas fa-plus-circle"></i> Take a Plan
+                </button>
+              {% endif %}
             </div>
-            <div class="form-group">
-              <label for="description">Description</label>
-              <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
-              <small class="error" id="description-error"></small>
-            </div><br><br>
-            <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Submit Enquiry</button>
-          </form>
+          </div>
         </div>
       </div>
     </div>

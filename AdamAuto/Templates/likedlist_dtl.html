@@ -92,10 +92,16 @@
                         <a href="{% url 'main' %}.#ab" class="nav-link">About</a>
                     </li>
                     <li class="nav-item">
-                        <a href="{% url 'userdisplaycars_dtl' %}" class="nav-link">Cars Collection</a>
+                      <a href="#con" class="nav-link">Contact</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="#con" class="nav-link">Contact</a>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="carCollectionDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Car Collections
+                      </a>
+                      <div class="dropdown-menu" aria-labelledby="carCollectionDropdown">
+                        <a class="dropdown-item" href="{% url 'userdisplaycars_dtl' %}">Adam Car Collection</a>
+                        <a class="dropdown-item" href="{% url 'certified_cars' %}">Adam Certified Cars</a>
+                      </div>
                     </li>
                     <ul class="navbar-nav ms-auto">
                       <li class="nav-item dropdown">
@@ -375,7 +381,7 @@
 
     <!-- Input Area -->
     <div style="padding: 10px; display: flex; gap: 5px;">
-      <input type="text" id="chatbot-input" placeholder="Start With Your Name..." 
+      <input type="text" id="chatbot-input" placeholder="Type your message here..." 
              style="flex: 1; padding: 8px; border-radius: 20px; border: 1px solid #ccc; font-size: 14px;" />
       <button onclick="sendMessage()" 
               style="background-color: #000000; color: white; border: none; border-radius: 20px; padding: 8px 15px; cursor: pointer;">
