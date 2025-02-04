@@ -98,6 +98,13 @@ urlpatterns = [
     path('perfect_car/', views.perfect_car, name='perfect_car'),
     path('certified_cars/', views.certified_cars, name='certified_cars'),
     path('sub_details/', views.sub_details, name='sub_details'),
+    path('chatbot/get_user_info/', views.get_chatbot_user_info, name='get_chatbot_user_info'),
+    path('chatbot/get_service_info/', views.get_chatbot_service_info, name='get_chatbot_service_info'),
+    path('chatbot/get_enquiry_info/', views.get_chatbot_enquiry_info, name='get_chatbot_enquiry_info'),
+    path('chatbot/get_sale_info/', views.get_chatbot_sale_info, name='get_chatbot_sale_info'),
+    path('chatbot/get_test_drive_info/', views.get_chatbot_test_drive_info, name='get_chatbot_test_drive_info'),
+    path('chatbot/get_liked_cars/', views.get_chatbot_liked_cars, name='get_chatbot_liked_cars'),
+
 
 
     

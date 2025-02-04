@@ -438,13 +438,15 @@
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const welcomeMessage = `Hi ${userName}, Welcome to Adam Automotive! How can I assist you today?`;
         const points = [
-          { text: 'Our luxury car collection', url: "{% url 'userdisplaycars_dtl' %}" },
-          { text: 'Booking a service', url: "{% url 'bookservice_dtl' %}" },
-          { text: 'Selling your car', url: "{% url 'sellcar_dtl' %}" },
-          { text: 'Car pricing and availability', url: "{% url 'userdisplaycars_dtl' %}" },
-          { text: 'Liked List', url: "{% url 'liked_list' %}" },
-          { text: 'Account Details', url: "{% url 'account_dtl' %}" },
-          { text: 'Requests', url: "{% url 'request_dtl' %}" }
+        { text: 'Our luxury car collection', url: "{% url 'userdisplaycarnologin_dtl' %}" },
+        { text: 'Certified Car Collection', url: "{% url 'certified_cars' %}" },
+        { text: 'Booking a service', url: "{% url 'bookservice_dtl' %}" },
+        { text: 'Sell your car To Adam', url: "{% url 'sellcar_dtl' %}" },
+        { text: 'Liked List', url: "{% url 'liked_list' %}" },
+        { text: 'Account Details', url: "{% url 'account_dtl' %}" },
+        { text: 'Perfect Car', url: "{% url 'perfect_car' %}" },
+        { text: 'Subscription Details', url: "{% url 'sub_details' %}" },
+        { text: 'Requests', url: "{% url 'request_dtl' %}" }
         ];
 
         messagesDiv.innerHTML = `

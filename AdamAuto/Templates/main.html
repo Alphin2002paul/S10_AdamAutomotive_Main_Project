@@ -305,13 +305,15 @@
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const welcomeMessage = `Hi ${userName}, Welcome to Adam Automotive! How can I assist you today?`;
         const points = [
-          { text: 'Our luxury car collection', url: "{% url 'userdisplaycars_dtl' %}" },
-          { text: 'Booking a service', url: "{% url 'bookservice_dtl' %}" },
-          { text: 'Selling your car', url: "{% url 'sellcar_dtl' %}" },
-          { text: 'Car pricing and availability', url: "{% url 'userdisplaycars_dtl' %}" },
-          { text: 'Liked List', url: "{% url 'liked_list' %}" },
-          { text: 'Account Details', url: "{% url 'account_dtl' %}" },
-          { text: 'Requests', url: "{% url 'request_dtl' %}" }
+        { text: 'Our luxury car collection', url: "{% url 'userdisplaycars_dtl' %}" },
+        { text: 'Certified Car Collection', url: "{% url 'certified_cars' %}" },
+        { text: 'Booking a service', url: "{% url 'bookservice_dtl' %}" },
+        { text: 'Sell your car To Adam', url: "{% url 'sellcar_dtl' %}" },
+        { text: 'Liked List', url: "{% url 'liked_list' %}" },
+        { text: 'Account Details', url: "{% url 'account_dtl' %}" },
+        { text: 'Perfect Car', url: "{% url 'perfect_car' %}" },
+        { text: 'Subscription Details', url: "{% url 'sub_details' %}" },
+        { text: 'Requests', url: "{% url 'request_dtl' %}" }
         ];
 
         messagesDiv.innerHTML = `
@@ -381,35 +383,17 @@
             </div>
           </div>`;
 
-        // Show typing indicator
-        messagesDiv.innerHTML += `
-          <div id="typing-indicator" style="display: flex; justify-content: flex-start; margin: 8px 0;">
-            <div style="max-width: 80%;">
-              <div class="typing-indicator">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-              </div>
-              <div style="font-size: 10px; color: #666;">
-                ${timestamp}
-              </div>
-            </div>
-          </div>`;
-
-        // Scroll to show typing indicator
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
         if (isFirstMessage) {
-          // Handle first message (name input)
-          userName = message;
-          isFirstMessage = false;
-          
-          // Remove typing indicator
+          // Remove typing indicator immediately for first message
           const typingIndicator = document.getElementById('typing-indicator');
           if (typingIndicator) {
             typingIndicator.remove();
           }
-
+          
+          // Rest of first message handling
+          userName = message;
+          isFirstMessage = false;
+          
           // Show welcome message with delayed points
           const welcomeMessage = `Hi ${userName}, Welcome to Adam Automotive! How can I assist you today?`;
           const points = [
@@ -459,6 +443,55 @@
         } else {
           // Regular conversation handling
           try {
+            // Show typing indicator immediately
+            messagesDiv.innerHTML += `
+              <div id="typing-indicator" style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                <div style="max-width: 80%;">
+                  <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                  </div>
+                  <div style="font-size: 10px; color: #666;">
+                    ${timestamp}
+                  </div>
+                </div>
+              </div>`;
+
+            // Wait for 5 seconds
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            // Remove typing indicator before showing response
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+              typingIndicator.remove();
+            }
+
+            // Check for specific user data requests
+            const userDataRequests = {
+                'account details': fetchUserInfo,
+                'profile': fetchUserInfo,
+                'liked cars': fetchLikedCars,
+                'liked list': fetchLikedCars,
+                'service': fetchServiceInfo,
+                'service info': fetchServiceInfo,
+                'enquiry': fetchEnquiryInfo,
+                'enquiries': fetchEnquiryInfo,
+                'sale': fetchSaleInfo,
+                'sale request': fetchSaleInfo,
+                'test drive': fetchTestDriveInfo,
+                'test drive booking': fetchTestDriveInfo
+            };
+
+            const messageLower = message.toLowerCase();
+            for (const [keyword, handler] of Object.entries(userDataRequests)) {
+                if (messageLower.includes(keyword)) {
+                    const response = await handler();
+                    displayBotResponse(response);
+                    return;
+                }
+            }
+
             // Check if message is contact-related
             const contactKeywords = ['contact', 'address', 'location', 'phone', 'email', 'reach', 'connect'];
             const isContactQuery = contactKeywords.some(keyword => 
@@ -466,12 +499,6 @@
             );
 
             if (isContactQuery) {
-              // Remove typing indicator
-              const typingIndicator = document.getElementById('typing-indicator');
-              if (typingIndicator) {
-                typingIndicator.remove();
-              }
-
               // Display formatted contact information
               messagesDiv.innerHTML += `
                 <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
@@ -499,6 +526,265 @@
                   </div>
                 </div>`;
             } else {
+              // Inside sendMessage function, before the API call, add this check:
+              const carCollectionKeywords = ['car collection', 'cars', 'collection', 'show cars', 'view cars', 'available cars'];
+              if (carCollectionKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+                const carCollectionSteps = `
+                  <div style="background-color: #f0f0f0; padding: 12px; border-radius: 8px;">
+                    <div style="margin-bottom: 8px;">
+                      <i class="fas fa-car" style="color: #ffc107; margin-right: 8px;"></i>
+                      <span style="font-weight: bold;">How to View Our Car Collection:</span>
+                    </div>
+                    
+                    <ol style="margin-left: 20px; margin-bottom: 10px;">
+                      <li style="margin-bottom: 8px;">Click on "Car Collections" in the navigation menu</li>
+                      <li style="margin-bottom: 8px;">Choose from two options:
+                        <ul style="margin-left: 20px; margin-top: 4px;">
+                          <li><a href="{% url 'userdisplaycars_dtl' %}" style="color: #007bff; text-decoration: none;">Adam Car Collection</a> - Our complete luxury car inventory</li>
+                          <li><a href="{% url 'certified_cars' %}" style="color: #007bff; text-decoration: none;">Adam Certified Cars</a> - Our certified pre-owned vehicles</li>
+                        </ul>
+                      </li>
+                      <li style="margin-bottom: 8px;">Use filters to narrow down your search by:
+                        <ul style="margin-left: 20px; margin-top: 4px;">
+                          <li>Brand</li>
+                          <li>Price range</li>
+                          <li>Year</li>
+                          <li>Mileage</li>
+                        </ul>
+                      </li>
+                      <li>Click on any car to view detailed information</li>
+                    </ol>
+                  </div>`;
+
+                messagesDiv.innerHTML += `
+                  <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                    <div style="max-width: 80%;">
+                      ${carCollectionSteps}
+                      <div style="font-size: 10px; color: #666;">
+                        ${timestamp}
+                      </div>
+                    </div>
+                  </div>`;
+              
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                return;
+              }
+
+              // Inside sendMessage function, before the API call, add this check:
+              const certifiedCarKeywords = ['certified cars', 'certified', 'certified collection', 'adam certified'];
+              if (certifiedCarKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+                const certifiedCarsInfo = `
+                  <div style="background-color: #f0f0f0; padding: 12px; border-radius: 8px;">
+                    <div style="margin-bottom: 8px;">
+                      <i class="fas fa-certificate" style="color: #ffc107; margin-right: 8px;"></i>
+                      <span style="font-weight: bold;">Adam Certified Cars</span>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                      Our certified pre-owned vehicles undergo rigorous inspection and meet our highest quality standards.
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                      <strong>Certification Benefits:</strong>
+                      <ul style="margin-left: 20px; margin-top: 4px;">
+                        <li>Comprehensive quality inspection</li>
+                        <li>Verified accident-free history</li>
+                        <li>Extended warranty coverage</li>
+                        <li>Premium maintenance service</li>
+                      </ul>
+                    </div>
+                    
+                    <div style="margin-top: 8px;">
+                      <a href="{% url 'certified_cars' %}" style="
+                        display: inline-block;
+                        padding: 8px 16px;
+                        background-color: #000000;
+                        color: #ffc107;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        transition: transform 0.2s;">
+                        <i class="fas fa-external-link-alt" style="margin-right: 8px;"></i>View Certified Cars
+                      </a>
+                    </div>
+                  </div>`;
+
+                messagesDiv.innerHTML += `
+                  <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                    <div style="max-width: 80%;">
+                      ${certifiedCarsInfo}
+                      <div style="font-size: 10px; color: #666;">
+                        ${timestamp}
+                      </div>
+                    </div>
+                  </div>`;
+              
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                return;
+              }
+
+              // Add to the carCollectionKeywords check block, before the API call
+              const subscriptionKeywords = ['subscription', 'subscribe', 'membership', 'premium access', 'subscription details', 'subscription plan'];
+              if (subscriptionKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+                const subscriptionInfo = `
+                  <div style="background-color: #f0f0f0; padding: 12px; border-radius: 8px;">
+                    <div style="margin-bottom: 8px;">
+                      <i class="fas fa-crown" style="color: #ffc107; margin-right: 8px;"></i>
+                      <span style="font-weight: bold;">Adam Automotive Subscriptions</span>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                      Unlock premium features and exclusive benefits with our subscription plans.
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                      <strong>Subscription Benefits:</strong>
+                      <ul style="margin-left: 20px; margin-top: 4px;">
+                        <li>Priority access to new car listings</li>
+                        <li>Exclusive member discounts</li>
+                        <li>Premium customer support</li>
+                        <li>Early bird access to special events</li>
+                      </ul>
+                    </div>
+                    
+                    <div style="margin-top: 8px;">
+                      <a href="{% url 'sub_details' %}" style="
+                        display: inline-block;
+                        padding: 8px 16px;
+                        background-color: #000000;
+                        color: #ffc107;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        transition: transform 0.2s;">
+                        <i class="fas fa-external-link-alt" style="margin-right: 8px;"></i>View Subscription Plans
+                      </a>
+                    </div>
+                  </div>`;
+
+                messagesDiv.innerHTML += `
+                  <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                    <div style="max-width: 80%;">
+                      ${subscriptionInfo}
+                      <div style="font-size: 10px; color: #666;">
+                        ${timestamp}
+                      </div>
+                    </div>
+                  </div>`;
+
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                return;
+              }
+
+              // Add this check before the API call in the sendMessage function
+              const perfectCarKeywords = ['perfect car', 'find perfect car', 'car finder', 'car recommendation', 'find me a car'];
+              if (perfectCarKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+                const perfectCarGuide = `
+                  <div style="background-color: #f0f0f0; padding: 12px; border-radius: 8px;">
+                    <div style="margin-bottom: 8px;">
+                      <i class="fas fa-search" style="color: #ffc107; margin-right: 8px;"></i>
+                      <span style="font-weight: bold;">How to Find Your Perfect Car:</span>
+                    </div>
+                    
+                    <ol style="margin-left: 20px; margin-bottom: 10px;">
+                      <li style="margin-bottom: 8px;">Click on your profile dropdown menu in the top navigation bar 
+                        <i class="fas fa-chevron-down" style="color: #ffc107; margin-left: 4px;"></i>
+                      </li>
+                      <li style="margin-bottom: 8px;">Look for the "Perfect Car" option in the dropdown menu 
+                        <i class="fas fa-car" style="color: #ffc107; margin-left: 4px;"></i>
+                      </li>
+                      <li style="margin-bottom: 8px;">Click on it to access our car recommendation system</li>
+                      <li style="margin-bottom: 8px;">Fill in your preferences:
+                        <ul style="margin-left: 20px; margin-top: 4px;">
+                          <li>Budget range</li>
+                          <li>Preferred brands</li>
+                          <li>Features you need</li>
+                          <li>Type of vehicle</li>
+                        </ul>
+                      </li>
+                    </ol>
+                    
+                    <div style="margin-top: 8px;">
+                      <a href="{% url 'perfect_car' %}" style="
+                        display: inline-block;
+                        padding: 8px 16px;
+                        background-color: #000000;
+                        color: #ffc107;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        transition: transform 0.2s;">
+                        <i class="fas fa-external-link-alt" style="margin-right: 8px;"></i>Find Perfect Car
+                      </a>
+                    </div>
+                  </div>`;
+
+                messagesDiv.innerHTML += `
+                  <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                    <div style="max-width: 80%;">
+                      ${perfectCarGuide}
+                      <div style="font-size: 10px; color: #666;">
+                        ${timestamp}
+                      </div>
+                    </div>
+                  </div>`;
+
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                return;
+              }
+
+              // Add this check before the API call in the sendMessage function
+              const carComplaintKeywords = ['car complaint', 'analyze complaint', 'car problem', 'analyze car', 'find problem'];
+              if (carComplaintKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+                const complaintAnalysisGuide = `
+                  <div style="background-color: #f0f0f0; padding: 12px; border-radius: 8px;">
+                    <div style="margin-bottom: 8px;">
+                      <i class="fas fa-search-plus" style="color: #ffc107; margin-right: 8px;"></i>
+                      <span style="font-weight: bold;">How to Analyze Car Complaints:</span>
+                    </div>
+                    
+                    <ol style="margin-left: 20px; margin-bottom: 10px;">
+                      <li style="margin-bottom: 8px;">Click on your profile dropdown menu in the top navigation bar 
+                        <i class="fas fa-chevron-down" style="color: #ffc107; margin-left: 4px;"></i>
+                      </li>
+                      <li style="margin-bottom: 8px;">Select "Book A Service" from the dropdown menu
+                        <i class="fas fa-wrench" style="color: #ffc107; margin-left: 4px;"></i>
+                      </li>
+                      <li style="margin-bottom: 8px;">On the Book A Service page, look for the "Analyze Car Complaints" button</li>
+                      <li style="margin-bottom: 8px;">Click the button and enter your car details:
+                        <ul style="margin-left: 20px; margin-top: 4px;">
+                          <li>Make and model</li>
+                          <li>Year</li>
+                          <li>Current issues/symptoms</li>
+                        </ul>
+                      </li>
+                    </ol>
+                    
+                    <div style="margin-top: 8px;">
+                      <a href="{% url 'bookservice_dtl' %}" style="
+                        display: inline-block;
+                        padding: 8px 16px;
+                        background-color: #000000;
+                        color: #ffc107;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        transition: transform 0.2s;">
+                        <i class="fas fa-external-link-alt" style="margin-right: 8px;"></i>Go to Book A Service
+                      </a>
+                    </div>
+                  </div>`;
+
+                messagesDiv.innerHTML += `
+                  <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                    <div style="max-width: 80%;">
+                      ${complaintAnalysisGuide}
+                      <div style="font-size: 10px; color: #666;">
+                        ${timestamp}
+                      </div>
+                    </div>
+                  </div>`;
+
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                return;
+              }
+
               // Existing API call and response handling for non-contact queries
               const response = await fetch(API_URL + '?key=' + API_KEY, {
                 method: 'POST',
@@ -529,12 +815,6 @@
 
               const data = await response.json();
               let botResponse = data.candidates[0].content.parts[0].text;
-
-              // Remove typing indicator before showing response
-              const typingIndicator = document.getElementById('typing-indicator');
-              if (typingIndicator) {
-                typingIndicator.remove();
-              }
 
               // Display bot response
               messagesDiv.innerHTML += `
@@ -574,6 +854,252 @@
         
         // Scroll to bottom after new messages
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      async function fetchUserInfo() {
+        const response = await fetch('/chatbot/get_user_info/');
+        const data = await response.json();
+        return `Here are your account details:
+            Name: ${data.name}
+            Email: ${data.email}
+            Phone: ${data.phone}
+            Address: ${data.address}
+            City: ${data.city}
+            State: ${data.state}
+            Zipcode: ${data.zipcode}`;
+      }
+
+      function getHeaderForType(type) {
+        const headerConfig = {
+          account: {
+            icon: 'fas fa-user-circle',
+            title: 'Account Details'
+          },
+          liked: {
+            icon: 'fas fa-heart',
+            title: 'Liked Cars'
+          },
+          service: {
+            icon: 'fas fa-wrench',
+            title: 'Service Requests'
+          },
+          sale: {
+            icon: 'fas fa-car',
+            title: 'Sale Requests'
+          },
+          enquiry: {
+            icon: 'fas fa-question-circle',
+            title: 'Enquiries'
+          },
+          testdrive: {
+            icon: 'fas fa-key',
+            title: 'Test Drive Requests'
+          }
+        };
+
+        const config = headerConfig[type];
+        return `
+          <div style="margin-bottom: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="${config.icon}" style="color: #ffc107;"></i>
+              <span style="font-size: 16px; color: #333;">${config.title}</span>
+            </div>
+            <div style="height: 2px; background-color: #ffc107; margin-top: 4px; width: 100%;"></div>
+          </div>
+        `;
+      }
+
+      function formatResponseCard(type, content) {
+        return `
+          <div style="background-color: #fff; border-radius: 8px; max-width: 280px;">
+            <div style="padding: 12px;">
+              ${getHeaderForType(type)}
+              <div style="display: grid; gap: 12px; margin-top: 12px;">
+                ${content}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      async function fetchLikedCars() {
+        const response = await fetch('/chatbot/get_liked_cars/');
+        const data = await response.json();
+        const content = data.liked_cars.length === 0 
+          ? '<div style="color: #666;">No liked cars found.</div>'
+          : data.liked_cars.map(car => `
+              <div style="border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                <div style="color: #333; font-weight: 500;">${car.manufacturer} ${car.model}</div>
+                <div style="color: #666;">Year: ${car.year}</div>
+                <div style="color: #666;">Price: ₹${car.price}</div>
+              </div>
+            `).join('');
+        
+        return formatResponseCard('liked', content);
+      }
+
+      async function fetchServiceInfo() {
+        const response = await fetch('/chatbot/get_service_info/');
+        const data = await response.json();
+        const content = data.services.length === 0
+          ? '<div style="color: #666;">No service requests found.</div>'
+          : data.services.map(service => `
+              <div style="border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                <div style="color: #333; font-weight: 500;">${service.manufacturer} ${service.model}</div>
+                <div style="color: #666;">Date: ${service.service_date}</div>
+                <div style="color: #666;">Status: ${service.status}</div>
+                <div style="color: #666;">Problem: ${service.problem}</div>
+              </div>
+            `).join('');
+
+        return formatResponseCard('service', content);
+      }
+
+      async function fetchSaleInfo() {
+        const response = await fetch('/chatbot/get_sale_info/');
+        const data = await response.json();
+        const content = data.sales.length === 0
+          ? '<div style="color: #666;">No sale requests found.</div>'
+          : data.sales.map(sale => `
+              <div style="border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                <div style="color: #333; font-weight: 500;">${sale.manufacturer} ${sale.model}</div>
+                <div style="color: #666;">Year: ${sale.year}</div>
+                <div style="color: #666;">Price: ₹${sale.price}</div>
+                <div style="color: #666;">Status: ${sale.status}</div>
+              </div>
+            `).join('');
+
+        return formatResponseCard('sale', content);
+      }
+
+      async function fetchEnquiryInfo() {
+        const response = await fetch('/chatbot/get_enquiry_info/');
+        const data = await response.json();
+        const content = data.enquiries.length === 0
+          ? '<div style="color: #666;">No enquiries found.</div>'
+          : data.enquiries.map(enquiry => `
+              <div style="border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                <div style="color: #333; font-weight: 500;">${enquiry.manufacturer} ${enquiry.model}</div>
+                <div style="color: #666;">Year: ${enquiry.year}</div>
+                <div style="color: #666;">Status: ${enquiry.status}</div>
+                <div style="color: #666;">Description: ${enquiry.description}</div>
+              </div>
+            `).join('');
+
+        return formatResponseCard('enquiry', content);
+      }
+
+      async function fetchTestDriveInfo() {
+        const response = await fetch('/chatbot/get_test_drive_info/');
+        const data = await response.json();
+        const content = data.test_drives.length === 0
+          ? '<div style="color: #666;">No test drive bookings found.</div>'
+          : data.test_drives.map(booking => `
+              <div style="border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                <div style="color: #333; font-weight: 500;">${booking.car}</div>
+                <div style="color: #666;">Date: ${booking.date}</div>
+                <div style="color: #666;">Time: ${booking.time}</div>
+                <div style="color: #666;">Status: ${booking.status}</div>
+              </div>
+            `).join('');
+
+        return formatResponseCard('testdrive', content);
+      }
+
+      function displayBotResponse(message) {
+        const messagesDiv = document.getElementById('chatbot-messages');
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        if (message.includes('Name:') || message.includes('Email:')) {
+          const lines = message.split('\n').filter(line => line.trim());
+          const formattedMessage = `
+            <div style="background-color: #fff; border-radius: 8px; max-width: 280px;">
+              <div style="padding: 12px;">
+                <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                  <i class="fas fa-user-circle" style="color: #ffc107; margin-right: 8px;"></i>
+                  <span style="font-size: 16px; color: #333;">Account Details</span>
+                </div>
+                <div style="height: 2px; background-color: #ffc107; margin-bottom: 12px;"></div>
+                
+                <div style="display: grid; gap: 12px;">
+                  ${lines.map(line => {
+                    const [key, ...valueParts] = line.split(':');
+                    const value = valueParts.join(':').trim();
+                    if (key && value) {
+                      return `
+                        <div style="display: grid; grid-template-columns: 80px 1fr; gap: 8px;">
+                          <span style="color: #666;">${key}:</span>
+                          <span style="color: #333; word-break: break-word; overflow-wrap: break-word;">${value}</span>
+                        </div>
+                      `;
+                    }
+                    return '';
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+
+          messagesDiv.innerHTML += `
+            <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+              <div style="max-width: 280px;">
+                ${formattedMessage}
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                  <div style="font-size: 10px; color: #666;">
+                    ${timestamp}
+                  </div>
+                  <button onclick="endChat()" 
+                          style="background: #dc3545; 
+                                 color: white; 
+                                 border: none; 
+                                 padding: 4px 8px; 
+                                 border-radius: 4px; 
+                                 font-size: 10px; 
+                                 cursor: pointer;">
+                    End Chat
+                  </button>
+                </div>
+              </div>
+            </div>`;
+        } else {
+          // Regular message handling
+          messagesDiv.innerHTML += `
+            <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+              <div style="max-width: 80%;">
+                <div style="background-color: #f8f9fa; padding: 8px 12px; border-radius: 12px 12px 12px 0;">
+                  ${message}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                  <div style="font-size: 10px; color: #666;">
+                    ${timestamp}
+                  </div>
+                  <button onclick="endChat()" 
+                          style="background: #dc3545; 
+                                 color: white; 
+                                 border: none; 
+                                 padding: 4px 8px; 
+                                 border-radius: 4px; 
+                                 font-size: 10px; 
+                                 cursor: pointer;">
+                    End Chat
+                  </button>
+                </div>
+              </div>
+            </div>`;
+        }
+        
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      function endChat() {
+        // Hide chatbot and show toggle button
+        const chatbot = document.getElementById('chatbot');
+        const toggleBtn = document.getElementById('chat-toggle-btn');
+        chatbot.style.display = 'none';
+        toggleBtn.style.display = 'block';
+        
+        // Refresh the page
+        window.location.reload();
       }
 
       // Add Enter key handler

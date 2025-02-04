@@ -2630,3 +2630,77 @@ def certified_cars(request):
 def sub_details(request):
     return render(request, 'sub_details.html')
 
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def get_chatbot_user_info(request):
+    user = request.user
+    data = {
+        'name': f"{user.first_name} {user.last_name}",
+        'email': user.email,
+        'phone': user.Phone_number,
+        'address': user.address,
+        'city': user.city,
+        'state': user.state,
+        'zipcode': user.zipcode,
+    }
+    return JsonResponse(data)
+
+@login_required
+def get_chatbot_liked_cars(request):
+    liked_cars = LikedCar.objects.filter(user=request.user).select_related('car')
+    data = [{
+        'manufacturer': like.car.manufacturer.company_name,
+        'model': like.car.model_name.model_name,
+        'year': like.car.year,
+        'price': str(like.car.price)
+    } for like in liked_cars]
+    return JsonResponse({'liked_cars': data})
+
+@login_required
+def get_chatbot_service_info(request):
+    services = Service.objects.filter(user=request.user)
+    data = [{
+        'manufacturer': service.manufacturer,
+        'model': service.model,
+        'service_date': service.service_date.strftime('%Y-%m-%d'),
+        'status': service.status,
+        'problem': service.problem
+    } for service in services]
+    return JsonResponse({'services': data})
+
+@login_required
+def get_chatbot_enquiry_info(request):
+    enquiries = CarEnquiry.objects.filter(user=request.user)
+    data = [{
+        'manufacturer': enquiry.manufacturer,
+        'model': enquiry.model_name,
+        'year': enquiry.model_year,
+        'status': enquiry.status,
+        'description': enquiry.description
+    } for enquiry in enquiries]
+    return JsonResponse({'enquiries': data})
+
+@login_required
+def get_chatbot_sale_info(request):
+    sales = SellCar.objects.filter(user=request.user)
+    data = [{
+        'manufacturer': sale.manufacturer,
+        'model': sale.model,
+        'year': sale.year,
+        'price': str(sale.price),
+        'status': sale.status
+    } for sale in sales]
+    return JsonResponse({'sales': data})
+
+@login_required
+def get_chatbot_test_drive_info(request):
+    test_drives = TestDriveBooking.objects.filter(user=request.user)
+    data = [{
+        'car': f"{test_drive.car.manufacturer} {test_drive.car.model_name}",
+        'date': test_drive.date.strftime('%Y-%m-%d'),
+        'time': test_drive.time,
+        'status': test_drive.status
+    } for test_drive in test_drives]
+    return JsonResponse({'test_drives': data})
