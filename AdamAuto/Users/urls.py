@@ -104,8 +104,8 @@ urlpatterns = [
     path('chatbot/get_sale_info/', views.get_chatbot_sale_info, name='get_chatbot_sale_info'),
     path('chatbot/get_test_drive_info/', views.get_chatbot_test_drive_info, name='get_chatbot_test_drive_info'),
     path('chatbot/get_liked_cars/', views.get_chatbot_liked_cars, name='get_chatbot_liked_cars'),
-
-
+    path('wholeseller/', views.wholeseller, name='wholeseller'),
+    path('wholeseller_req/', views.wholeseller_req, name='wholeseller_req'),
 
     
 

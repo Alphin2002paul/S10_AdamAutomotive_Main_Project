@@ -44,6 +44,8 @@ def login_view(request):
             return redirect('adminindex')
         if user.user_type == "customer":
             return redirect('main')
+        if user.user_type == "dealer":
+            return redirect('wholeseller')
     if request.method == 'POST':
         email = request.POST['email']
         password = request.POST['password']
@@ -56,6 +58,8 @@ def login_view(request):
                 return redirect('adminindex')
             if user.user_type == "customer":
                 return redirect('main')
+            if user.user_type == "dealer":
+                return redirect('wholeseller')
         else:
             messages.error(request, 'Invalid email or password or inactive account.')
             return redirect('login')
@@ -906,46 +910,56 @@ def bookservice_dtl(request):
     # Handle GET request
     return render(request, 'bookservice_dtl.html')
 
-from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import render
 from .models import SellCar, SellCarImage
-from django.contrib import messages
 
 @login_required
 def sellcar_dtl(request):
     if request.method == 'POST':
-        # Create a new SellCar instance
-        sell_car = SellCar(
-            user=request.user,
-            manufacturer=request.POST['manufacturer'],
-            model=request.POST['model'],
-            year=request.POST['year'],
-            price=request.POST['price'],
-            color=request.POST['color'],
-            fuel_type=request.POST['fuel_type'],
-            kilometers=request.POST['kilometers'],
-            transmission=request.POST['transmission'],
-            condition=request.POST['condition'],
-            reg_number=request.POST['reg_number'],
-            insurance_validity=request.POST['insurance_validity'],
-            pollution_validity=request.POST['pollution_validity'],
-            tax_validity=request.POST['tax_validity'],
-            car_type=request.POST['car_type'],
-            owner_status=request.POST['owner_status'],
-            car_cc=request.POST['car_cc'],
-        )
-        sell_car.save()
+        try:
+            # Debug print
+            print("POST request received")
+            print("POST data:", request.POST)
+            print("FILES:", request.FILES)
 
-        # Handle image uploads
-        images = request.FILES.getlist('images')
-        for image in images:
-            SellCarImage.objects.create(sell_car=sell_car, image=image)
+            # Create a new SellCar instance
+            sell_car = SellCar(
+                user=request.user,
+                manufacturer=request.POST.get('manufacturer'),
+                model=request.POST.get('model'),
+                year=request.POST.get('year'),
+                price=request.POST.get('price'),
+                color=request.POST.get('color'),
+                fuel_type=request.POST.get('fuel_type'),
+                kilometers=request.POST.get('kilometers'),
+                transmission=request.POST.get('transmission'),
+                condition=request.POST.get('condition'),
+                reg_number=request.POST.get('reg_number'),
+                insurance_validity=request.POST.get('insurance_validity'),
+                pollution_validity=request.POST.get('pollution_validity'),
+                tax_validity=request.POST.get('tax_validity'),
+                car_type=request.POST.get('car_type'),
+                owner_status=request.POST.get('owner_status'),
+                car_cc=request.POST.get('car_cc'),
+                status='pending'  # Set initial status
+            )
+            sell_car.save()
 
-        messages.success(request, 'Your car details have been submitted successfully.')
-        return redirect('main')
+            # Handle image uploads
+            images = request.FILES.getlist('images')
+            for image in images[:5]:  # Limit to 5 images
+                SellCarImage.objects.create(sell_car=sell_car, image=image)
 
+            return JsonResponse({'success': True})
+            
+        except Exception as e:
+            print("Error:", str(e))  # Debug print
+            return JsonResponse({'success': False, 'message': str(e)})
+
+    # GET request
     return render(request, 'sellcar_dtl.html')
-
 from django.shortcuts import render
 from .models import Service
 
@@ -2704,3 +2718,12 @@ def get_chatbot_test_drive_info(request):
         'status': test_drive.status
     } for test_drive in test_drives]
     return JsonResponse({'test_drives': data})
+
+def wholeseller(request):
+    return render(request, 'wholeseller.html')
+
+@login_required
+def wholeseller_req(request):
+    # Get all sale requests for the logged-in user
+    sale_requests = SellCar.objects.filter(user=request.user).order_by('-id')
+    return render(request, 'wholeseller_req.html', {'sale_requests': sale_requests})

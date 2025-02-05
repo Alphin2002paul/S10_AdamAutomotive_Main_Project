@@ -65,17 +65,16 @@
                     <i class="fe-icon-shopping-bag mr-1 text-muted"></i>
                     <div class="d-inline-block font-weight-medium text-uppercase">Overview</div>
                   </div>
-                  
                 </div>
               </a>
               <a class="list-group-item" href="{% url 'account_edit' %}"><i class="fe-icon-user text-muted"></i>Edit Profile Settings</a>
+              {% if user.user_type != 'dealer' %}
               <a class="list-group-item" href="{% url 'enquirecar' %}" >
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
                     <i class="fe-icon-shopping-bag mr-1 text-muted"></i>
                     <div class="d-inline-block font-weight-medium text-uppercase">Enquire a Car</div>
                   </div>
-                  
                 </div>
               </a>
               <a class="list-group-item" href="{% url 'mybookings' %}">
@@ -84,7 +83,6 @@
                     <i class="fe-icon-shopping-bag mr-1 text-muted"></i>
                     <div class="d-inline-block font-weight-medium text-uppercase">Purchase History</div>
                   </div>
-                  
                 </div>
               </a>
               <a class="list-group-item" href="{% url 'sub_details' %}">
@@ -93,10 +91,10 @@
                     <i class="fe-icon-shopping-bag mr-1 text-muted"></i>
                     <div class="d-inline-block font-weight-medium text-uppercase">Subscription Details</div>
                   </div>
-                  
                 </div>
               </a>
-              <a class="list-group-item" href="{% url 'main' %}">
+              {% endif %}
+              <a class="list-group-item" href="{% if user.user_type == 'dealer' %}{% url 'wholeseller' %}{% else %}{% url 'main' %}{% endif %}">
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
                     <i class="fe-icon-tag mr-1 text-muted"></i>

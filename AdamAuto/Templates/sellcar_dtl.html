@@ -24,6 +24,17 @@
      <!-- Add Font Awesome CDN -->
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+    $.ajaxSetup({
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    });
+    </script>
+
     <style>
       .custom-btn {
         background: #d39e00;
@@ -270,7 +281,7 @@
     
             <div class="row">
               <div class="col-md-12">
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="submit" class="btn btn-primary custom-btn">Submit</button>
               </div>
             </div>
           </form>
@@ -361,176 +372,58 @@
     <script src="{% static 'displaycar/js/jquery.timepicker.min.js' %}"></script>
     <script src="{% static 'displaycar/js/scrollax.min.js' %}"></script>
     <script src="{% static 'displaycar/js/main.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-      $(document).ready(function () {
-        const minDate = new Date()
-        minDate.setMonth(minDate.getMonth() + 1)
-        const minDateString = minDate.toISOString().split('T')[0]
-      
-        $('#insurance_validity, #pollution_validity, #tax_validity').attr('min', minDateString)
-      
-        // Real-time validation
-        $('#sellCarForm input, #sellCarForm select, #sellCarForm textarea').on('blur', function() {
-          validateField($(this));
-        });
-      
-        // Add this: Check registration number on blur
-        $('#reg_number').on('blur', function() {
-          checkRegistrationNumber($(this).val());
-        });
-      
-        $('#sellCarForm').on('submit', function (event) {
-          event.preventDefault();
-          
-          if (validateForm()) {
-            checkRegistrationNumber($('#reg_number').val(), true);
+      $(document).ready(function() {
+        // Debug log
+        console.log('Document ready');
+
+        $('#sellCarForm').on('submit', function(e) {
+          // Debug log
+          console.log('Form submitted');
+          e.preventDefault();
+
+          // Create FormData object
+          var formData = new FormData(this);
+
+          // Debug log form data
+          for (var pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
           }
-        });
-      
-        function checkRegistrationNumber(regNumber, isSubmit = false) {
+
           $.ajax({
-            type: 'GET',
-            url: '{% url "check_registration_number" %}',
-            data: { reg_number: regNumber },
-            success: function(response) {
-              if (response.exists) {
-                $('#regNumberError').text('This registration number already exists.');
-                $('#reg_number').addClass('is-invalid');
-              } else {
-                $('#regNumberError').text('');
-                $('#reg_number').removeClass('is-invalid');
-                if (isSubmit) {
-                  submitForm();
-                }
-              }
-            },
-            error: function() {
-              $('#regNumberError').text('Error checking registration number.');
-            }
-          });
-        }
-      
-        function submitForm() {
-          var formData = new FormData($('#sellCarForm')[0]);
-        
-          $.ajax({
+            url: "{% url 'sellcar_dtl' %}",
             type: 'POST',
-            url: '{% url "sellcar_dtl" %}',
             data: formData,
             processData: false,
             contentType: false,
-            success: function (response) {
-              Swal.fire({
-                title: 'Success!',
-                text: 'Your car details have been submitted successfully.',
-                icon: 'success',
-                confirmButtonText: 'Okay'
-              }).then(() => {
-                window.location.href = '{% url "main" %}';
-              });
+            success: function(response) {
+              console.log('Success:', response);
+              if (response.success) {
+                Swal.fire({
+                  title: 'Success!',
+                  text: 'Your car details have been submitted successfully.',
+                  icon: 'success'
+                }).then(() => {
+                  window.location.href = "{% url 'main' %}";
+                });
+              } else {
+                Swal.fire({
+                  title: 'Error!',
+                  text: response.message || 'Something went wrong.',
+                  icon: 'error'
+                });
+              }
             },
-            error: function (xhr) {
-              const errors = xhr.responseJSON.errors;
-              for (const key in errors) {
-                if (errors.hasOwnProperty(key)) {
-                  $(`#${key}Error`).text(errors[key].join(', '));
-                }
-              }
+            error: function(xhr, status, error) {
+              console.log('Error:', error);
+              Swal.fire({
+                title: 'Error!',
+                text: 'Something went wrong. Please try again.',
+                icon: 'error'
+              });
             }
           });
-          }
-      
-        function validateField($field) {
-          const fieldId = $field.attr('id');
-          const fieldValue = $field.val().trim();
-          let isValid = true;
-          let errorMessage = '';
-      
-          switch (fieldId) {
-            case 'manufacturer':
-            case 'model':
-            case 'color':
-            case 'condition':
-              if (fieldValue === '') {
-                errorMessage = `${$field.prev('label').text()} is required.`;
-                isValid = false;
-              } else if (/[^a-zA-Z0-9 ]/.test(fieldValue)) {
-                errorMessage = `Special characters are not allowed in ${$field.prev('label').text()}.`;
-                isValid = false;
-              }
-              break;
-            case 'year':
-              const yearValue = parseInt(fieldValue, 10);
-              if (isNaN(yearValue) || yearValue < 1886 || yearValue > new Date().getFullYear()) {
-                errorMessage = 'Please enter a valid year.';
-                isValid = false;
-              }
-              break;
-            case 'price':
-            case 'kilometers':
-            case 'car_cc':
-              if (fieldValue === '' || parseFloat(fieldValue) <= 0) {
-                errorMessage = `${$field.prev('label').text()} must be a positive number.`;
-                isValid = false;
-              }
-              break;
-            case 'fuel_type':
-            case 'transmission':
-            case 'car_type':
-              if ($field.val() === null) {
-                errorMessage = `${$field.prev('label').text()} is required.`;
-                isValid = false;
-              }
-              break;
-            case 'reg_number':
-              if (fieldValue === '') {
-                errorMessage = 'Registration Number is required.';
-                isValid = false;
-              } else if (!/^[A-Z]{2}-\d{2}-[A-Z]-\d{4}$/.test(fieldValue)) {
-                errorMessage = 'Registration Number must be in the format AA-00-A-0000.';
-                isValid = false;
-              }
-              break;
-            case 'insurance_validity':
-            case 'pollution_validity':
-            case 'tax_validity':
-              if (fieldValue === '') {
-                errorMessage = `${$field.prev('label').text()} is required.`;
-                isValid = false;
-              }
-              break;
-            case 'owner_status':
-              if (fieldValue === '') {
-                errorMessage = 'Owner Status is required.';
-                isValid = false;
-              } else if (!/^[1-9]$/.test(fieldValue)) {
-                errorMessage = 'Owner Status must be a single digit (1-9) and cannot be 0.';
-                isValid = false;
-              }
-              break;
-            case 'images':
-              const images = $field[0].files;
-              if (images.length > 5) {
-                errorMessage = 'You can upload a maximum of 5 images.';
-                isValid = false;
-              }
-              break;
-          }
-      
-          $(`#${fieldId}Error`).text(errorMessage);
-          return isValid;
-        }
-      
-        function validateForm() {
-          let isValid = true;
-          $('#sellCarForm input, #sellCarForm select, #sellCarForm textarea').each(function() {
-            if (!validateField($(this))) {
-              isValid = false;
-            }
-          });
-          return isValid;
-        }
+        });
       });
     </script>
    <!-- Chatbot Integration -->
@@ -1481,6 +1374,23 @@
       100% { transform: translateY(0px); }
     }
   </style>
-    
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.getElementById('termsAndConditions').addEventListener('click', function (e) {
+      e.preventDefault()
+      Swal.fire({
+        title: 'Terms and Conditions of Adam Automotive',
+        html: `
+            <p>1. All sales are final.</p>
+            <p>2. No Vehilces Which Has Any Kind Of Accidents And Flood Are Sold.</p>
+            <p>3. Adam Automotive reserves the right to refuse service to anyone.</p>
+            <p>4. Test drives are subject to approval and require a valid driver's license.</p>
+            <p>5. Prices are subject to change without notice.</p>
+          `,
+        confirmButtonText: 'Okay',
+        confirmButtonColor: '#d39e00'
+      })
+    })
+  </script>
   </body>
 </html>
