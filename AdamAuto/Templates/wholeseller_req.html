@@ -78,6 +78,24 @@
             color: #fff;
             border: 1px solid transparent;
         }
+
+        .custom-swal-popup {
+            padding: 2rem;
+        }
+        
+        .custom-swal-content {
+            padding: 1rem;
+        }
+        
+        .form-control-lg {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .form-control-lg:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
     </style>
 </head>
 
@@ -150,7 +168,25 @@
                             </td>
                             <td>
                                 <button class="btn btn-sm btn-primary" 
-                                        onclick="openEditSaleModal({{ sale.id }}, '{{ sale.manufacturer }}', '{{ sale.model }}', '{{ sale.year }}', '{{ sale.price }}')" 
+                                        onclick="openEditSaleModal(
+                                            {{ sale.id }}, 
+                                            '{{ sale.manufacturer }}', 
+                                            '{{ sale.model }}', 
+                                            '{{ sale.year }}', 
+                                            '{{ sale.price }}',
+                                            '{{ sale.color }}',
+                                            '{{ sale.fuel_type }}',
+                                            '{{ sale.kilometers }}',
+                                            '{{ sale.transmission }}',
+                                            '{{ sale.condition|escapejs }}',
+                                            '{{ sale.reg_number }}',
+                                            '{{ sale.insurance_validity|date:"Y-m-d" }}',
+                                            '{{ sale.pollution_validity|date:"Y-m-d" }}',
+                                            '{{ sale.tax_validity|date:"Y-m-d" }}',
+                                            '{{ sale.car_type }}',
+                                            '{{ sale.owner_status }}',
+                                            '{{ sale.car_cc }}'
+                                        )" 
                                         {% if sale.status != 'pending' %}disabled{% endif %}>
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
@@ -317,128 +353,266 @@
         })
     </script>
     <script>
-
-        function openEditSaleModal(id, manufacturer, model, year, price) {
-            console.log("openEditSaleModal called with id:", id);
+        function openEditSaleModal(id, manufacturer, model, year, price, color, fuelType, kilometers, transmission, condition, regNumber, insuranceValidity, pollutionValidity, taxValidity, carType, ownerStatus, carCC) {
+            const today = new Date();
+            const currentYear = today.getFullYear();
             
-            // Get the date 20 days from now
+            // Format the dates properly
+            const formatDate = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toISOString().split('T')[0];
+            };
+
+            // Get the date 20 days from now for validity dates
             const minDate = new Date();
             minDate.setDate(minDate.getDate() + 20);
             const minDateString = minDate.toISOString().split('T')[0];
-        
-            // Get the current year
-            const currentYear = new Date().getFullYear();
-        
+
+            // Format the incoming dates
+            const formattedInsuranceValidity = formatDate(insuranceValidity);
+            const formattedPollutionValidity = formatDate(pollutionValidity);
+            const formattedTaxValidity = formatDate(taxValidity);
+
             Swal.fire({
-                title: 'Edit Sale Request',
+                title: 'Edit Wholeseller Request',
                 html: `
-                   <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
-                        <div style="flex: 0 0 32%; margin-bottom: 10px;">
-                            <input id="swal-input1" class="swal2-input" placeholder="Manufacturer" value="${manufacturer}" onkeypress="return /^[a-zA-Z0-9 ]*$/.test(event.key)">
+                    <div class="container" style="max-width: 500px; margin: auto;">
+                        <div class="form-group mb-4">
+                            <input id="swal-input1" class="form-control form-control-lg" 
+                                   placeholder="Manufacturer" value="${manufacturer}"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
                         </div>
-                        <div style="flex: 0 0 32%; margin-bottom: 10px;">
-                            <input id="swal-input2" class="swal2-input" placeholder="Model" value="${model}" onkeypress="return /^[a-zA-Z0-9 ]*$/.test(event.key)">
+                        
+                        <div class="form-group mb-4">
+                            <input id="swal-input2" class="form-control form-control-lg" 
+                                   placeholder="Model" value="${model}"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
                         </div>
-                        <div style="flex: 0 0 32%; margin-bottom: 10px;">
-                            <input id="swal-input3" class="swal2-input" placeholder="Year" value="${year}" type="number" min="2000" max="${currentYear}">
+                        
+                        <div class="form-group mb-4">
+                            <input id="swal-input3" class="form-control form-control-lg" 
+                                   placeholder="Year" value="${year}" type="number"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
                         </div>
-                    </div>
-                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
-                        <div style="flex: 0 0 32%; margin-bottom: 10px;">
-                            <input id="swal-input4" class="swal2-input" placeholder="Price" value="${price}" type="number" min="1">
+                        
+                        <div class="form-group mb-4">
+                            <input id="swal-input4" class="form-control form-control-lg" 
+                                   placeholder="Price" value="${price}" type="number"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <input id="swal-input5" class="form-control form-control-lg" 
+                                   placeholder="Color" value="${color}"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <select id="swal-input6" class="form-control form-control-lg"
+                                    style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                                <option value="" disabled>Select Fuel Type</option>
+                                <option value="Petrol" ${fuelType === 'Petrol' ? 'selected' : ''}>Petrol</option>
+                                <option value="Diesel" ${fuelType === 'Diesel' ? 'selected' : ''}>Diesel</option>
+                                <option value="Electric" ${fuelType === 'Electric' ? 'selected' : ''}>Electric</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <input id="swal-input7" class="form-control form-control-lg" 
+                                   placeholder="Kilometers" value="${kilometers}"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <select id="swal-input8" class="form-control form-control-lg"
+                                    style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                                <option value="" disabled>Select Transmission Type</option>
+                                <option value="Manual" ${transmission === 'Manual' ? 'selected' : ''}>Manual</option>
+                                <option value="Automatic" ${transmission === 'Automatic' ? 'selected' : ''}>Automatic</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <input id="swal-input10" class="form-control form-control-lg" 
+                                   placeholder="Registration Number" value="${regNumber}" pattern="^[A-Z]{2}-\\d{2}-[A-Z]-\\d{4}$"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <input id="swal-input11" class="form-control form-control-lg" 
+                                   placeholder="Insurance Validity" value="${formattedInsuranceValidity}" type="date"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <input id="swal-input12" class="form-control form-control-lg" 
+                                   placeholder="Pollution Validity" value="${formattedPollutionValidity}" type="date"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <input id="swal-input13" class="form-control form-control-lg" 
+                                   placeholder="Tax Validity" value="${formattedTaxValidity}" type="date"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <select id="swal-input14" class="form-control form-control-lg"
+                                    style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                                <option value="" disabled>Select Car Type</option>
+                                <option value="SUV" ${carType === 'SUV' ? 'selected' : ''}>SUV</option>
+                                <option value="MPV" ${carType === 'MPV' ? 'selected' : ''}>MPV</option>
+                                <option value="Sedan" ${carType === 'Sedan' ? 'selected' : ''}>Sedan</option>
+                                <option value="Hatchback" ${carType === 'Hatchback' ? 'selected' : ''}>Hatchback</option>
+                                <option value="Compact SUV" ${carType === 'Compact SUV' ? 'selected' : ''}>Compact SUV</option>
+                                <option value="Coupe" ${carType === 'Coupe' ? 'selected' : ''}>Coupe</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <input id="swal-input15" class="form-control form-control-lg" 
+                                   placeholder="Owner Status" value="${ownerStatus}" type="number" min="1" max="9"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <input id="swal-input16" class="form-control form-control-lg" 
+                                   placeholder="Car CC" value="${carCC}" type="number" min="1000" max="9999"
+                                   style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%;">
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <textarea id="swal-input9" class="form-control form-control-lg" 
+                                      placeholder="Condition" style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px; width: 100%; height: 100px;">${condition}</textarea>
                         </div>
                     </div>
                 `,
+                customClass: {
+                    container: 'custom-swal-container',
+                    popup: 'custom-swal-popup',
+                    content: 'custom-swal-content'
+                },
+                width: '600px',
                 showCancelButton: true,
                 cancelButtonText: 'Cancel',
                 confirmButtonText: 'Update',
+                confirmButtonColor: '#000000',
+                cancelButtonColor: '#d33',
                 focusConfirm: false,
                 preConfirm: () => {
-                    const updatedManufacturer = document.getElementById('swal-input1').value;
-                    const updatedModel = document.getElementById('swal-input2').value;
-                    const updatedYear = document.getElementById('swal-input3').value;
-                    const updatedPrice = document.getElementById('swal-input4').value;
-        
-                    // Validate inputs
-                    if (!updatedManufacturer || !updatedModel || !updatedYear || !updatedPrice) {
-                        Swal.showValidationMessage('Please fill in all required fields');
+                    // Get all input values
+                    const values = {
+                        manufacturer: document.getElementById('swal-input1').value.trim(),
+                        model: document.getElementById('swal-input2').value.trim(),
+                        year: document.getElementById('swal-input3').value,
+                        price: document.getElementById('swal-input4').value,
+                        color: document.getElementById('swal-input5').value.trim(),
+                        fuel_type: document.getElementById('swal-input6').value,
+                        kilometers: document.getElementById('swal-input7').value,
+                        transmission: document.getElementById('swal-input8').value,
+                        condition: document.getElementById('swal-input9').value.trim(),
+                        reg_number: document.getElementById('swal-input10').value.trim(),
+                        insurance_validity: document.getElementById('swal-input11').value,
+                        pollution_validity: document.getElementById('swal-input12').value,
+                        tax_validity: document.getElementById('swal-input13').value,
+                        car_type: document.getElementById('swal-input14').value,
+                        owner_status: document.getElementById('swal-input15').value,
+                        car_cc: document.getElementById('swal-input16').value
+                    };
+
+                    // Validation checks
+                    const regNumberPattern = /^[A-Z]{2}-\d{2}-[A-Z]-\d{4}$/;
+                    if (!regNumberPattern.test(values.reg_number)) {
+                        Swal.showValidationMessage('Registration number must be in format KL-07-Z-2001');
                         return false;
                     }
-        
-                    // Validate year
-                    if (updatedYear < 2000 || updatedYear > currentYear) {
-                        Swal.showValidationMessage(`Year must be between 2000 and ${currentYear}`);
+
+                    // Date validations
+                    const minValidDate = new Date(minDateString);
+                    const insuranceDate = new Date(values.insurance_validity);
+                    const pollutionDate = new Date(values.pollution_validity);
+                    const taxDate = new Date(values.tax_validity);
+
+                    if (insuranceDate < minValidDate) {
+                        Swal.showValidationMessage('Insurance validity must be at least 20 days from today');
                         return false;
                     }
-        
-                    // Validate price
-                    if (updatedPrice <= 0) {
-                        Swal.showValidationMessage('Price must be greater than zero');
+                    if (pollutionDate < minValidDate) {
+                        Swal.showValidationMessage('Pollution validity must be at least 20 days from today');
                         return false;
                     }
-        
-                    // Call the function to update the sale request
-                    return updateSaleRequest(id, updatedManufacturer, updatedModel, updatedYear, updatedPrice);
+                    if (taxDate < minValidDate) {
+                        Swal.showValidationMessage('Tax validity must be at least 20 days from today');
+                        return false;
+                    }
+
+                    // ... other validations ...
+
+                    return values;
                 }
             }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.reload(); // Reload the page if the modal is confirmed
+                if (result.isConfirmed && result.value) {
+                    updateSaleRequest(id, result.value);
                 }
             });
         }
 
-function updateSaleRequest(id, manufacturer, model, year, price) {
-    // Make an AJAX request to update the sale request
-    return fetch(`/update_sale/${id}/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}',
-        },
-        body: JSON.stringify({
-            manufacturer: manufacturer,
-            model: model,
-            year: year,
-            price: price,
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Update the row in the table
-            const row = document.querySelector(`#saleTable tr[data-id="${id}"]`);
-            if (row) {
-                row.querySelector('td:nth-child(1)').textContent = manufacturer;
-                row.querySelector('td:nth-child(2)').textContent = model;
-                row.querySelector('td:nth-child(3)').textContent = year;
-                row.querySelector('td:nth-child(4)').textContent = price;
-            }
-            
-            return Swal.fire({
-                title: 'Updated!',
-                text: 'Sale request has been updated.',
-                icon: 'success',
-                confirmButtonText: 'OK'
+        function updateSaleRequest(id, values) {
+            // Convert dates to ISO format for consistency
+            const formatDateForServer = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toISOString().split('T')[0];
+            };
+
+            const formattedValues = {
+                ...values,
+                insurance_validity: formatDateForServer(values.insurance_validity),
+                pollution_validity: formatDateForServer(values.pollution_validity),
+                tax_validity: formatDateForServer(values.tax_validity)
+            };
+
+            return fetch(`/update_sale/${id}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify(formattedValues)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Sale request updated successfully',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error(data.message || 'Cannot update this sale request.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                return Swal.fire({
+                    title: 'Error!',
+                    text: error.message || 'Cannot update this sale request.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             });
-        } else {
-            throw new Error(data.message || 'Cannot update this sale request.');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        return Swal.fire({
-            title: 'Error!',
-            text: error.message || 'Cannot update this sale request.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-        });
-    });
-}
+    </script>
+    <script>
         function denySale(id) {
             // Show confirmation dialog
             Swal.fire({
@@ -480,7 +654,6 @@ function updateSaleRequest(id, manufacturer, model, year, price) {
             });
         }
     </script>
-    
 </body>
 
 </html>

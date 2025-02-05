@@ -354,10 +354,62 @@
     <script src="{% static 'displaycar/js/main.js' %}"></script>
     <script>
       $(document).ready(function() {
+        // Calculate minimum date (30 days from today)
+        const today = new Date();
+        const minDate = new Date(today);
+        minDate.setDate(today.getDate() + 30);
+        
+        const minDateStr = minDate.toISOString().split('T')[0];
+        
+        // Set minimum date for all date inputs
+        $('#insurance_validity, #pollution_validity, #tax_validity').attr('min', minDateStr);
+
+        // Date validation function
+        function validateDates() {
+          const insuranceDate = new Date($('#insurance_validity').val());
+          const pollutionDate = new Date($('#pollution_validity').val());
+          const taxDate = new Date($('#tax_validity').val());
+          const minimumDate = new Date(minDate);
+          
+          // Reset time parts for accurate date comparison
+          minimumDate.setHours(0, 0, 0, 0);
+          
+          let isValid = true;
+          
+          // Clear previous error messages
+          $('.error-message').text('');
+
+          // Insurance validity validation
+          if (insuranceDate < minimumDate) {
+            $('#insuranceValidityError').text('Validity date must be at least 30 days from today');
+            isValid = false;
+          }
+
+          // Pollution validity validation
+          if (pollutionDate < minimumDate) {
+            $('#pollutionValidityError').text('Validity date must be at least 30 days from today');
+            isValid = false;
+          }
+
+          // Tax validity validation
+          if (taxDate < minimumDate) {
+            $('#taxValidityError').text('Validity date must be at least 30 days from today');
+            isValid = false;
+          }
+
+          return isValid;
+        }
+
+        // Form submission handler
         $('#sellCarForm').on('submit', function(e) {
           e.preventDefault();
-          var formData = new FormData(this);
+          
+          if (!validateDates()) {
+            return false;
+          }
 
+          var formData = new FormData(this);
+          
           $.ajax({
             url: "{% url 'sellcar_dtl' %}",
             type: 'POST',
@@ -365,18 +417,13 @@
             processData: false,
             contentType: false,
             success: function(response) {
-              console.log('Success:', response);
               if (response.success) {
                 Swal.fire({
                   title: 'Success!',
                   text: 'Your car details have been submitted successfully.',
                   icon: 'success'
                 }).then(() => {
-                  if ("{{ user.user_type }}" === "dealer") {
-                    window.location.href = "{% url 'wholeseller' %}";
-                  } else {
-                    window.location.href = "{% url 'main' %}";
-                  }
+                  window.location.href = "{% url 'wholeseller' %}";
                 });
               } else {
                 Swal.fire({
@@ -387,7 +434,6 @@
               }
             },
             error: function(xhr, status, error) {
-              console.log('Error:', error);
               Swal.fire({
                 title: 'Error!',
                 text: 'Something went wrong. Please try again.',
@@ -396,6 +442,9 @@
             }
           });
         });
+
+        // Real-time validation on date changes
+        $('#insurance_validity, #pollution_validity, #tax_validity').on('change', validateDates);
       });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

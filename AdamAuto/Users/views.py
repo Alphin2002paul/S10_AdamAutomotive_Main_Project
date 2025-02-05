@@ -2303,11 +2303,17 @@ def update_test_drive(request, id):
 @login_required
 @require_POST
 def delete_test_drive(request, test_drive_id):
-    test_drive = get_object_or_404(TestDriveBooking, id=test_drive_id, user=request.user)
-    if test_drive.status == 'Pending':
-        test_drive.delete()
-        return JsonResponse({'success': True, 'message': 'Test drive request deleted successfully.'})
-    return JsonResponse({'success': False, 'message': 'Cannot delete this test drive request.'})
+    try:
+        test_drive = get_object_or_404(TestDriveBooking, id=test_drive_id)
+        if test_drive.status == 'pending':
+            test_drive.delete()
+            return JsonResponse({'success': True, 'message': 'Test drive request deleted successfully.'})
+        else:
+            return JsonResponse({'success': False, 'message': 'Can only delete pending test drive requests.'})
+    except TestDriveBooking.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Test drive request not found.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'An error occurred: {str(e)}'})
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
