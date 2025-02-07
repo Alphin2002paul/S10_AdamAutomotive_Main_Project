@@ -2735,6 +2735,21 @@ def wholeseller_req(request):
     return render(request, 'wholeseller_req.html', {'sale_requests': sale_requests})
 
 def wholeseller_admin(request):
-    return render(request, 'wholeseller_admin.html')
+    # Filter cars with 'pending' status
+    pending_cars = SellCar.objects.filter(status='pending').order_by('-created_at')
+    
+    # Add images to each car
+    for car in pending_cars:
+        car.image_list = SellCarImage.objects.filter(sell_car=car)  # Updated to use SellCarImage
+    
+    # Pagination
+    paginator = Paginator(pending_cars, 3)  # Show 3 cars per page
+    page_number = request.GET.get('page')
+    sell_cars = paginator.get_page(page_number)
+    
+    context = {
+        'sell_cars': sell_cars,  # Add sell_cars to context
+    }
+    return render(request, 'wholeseller_admin.html', context)  # Pass context to template
 
     
