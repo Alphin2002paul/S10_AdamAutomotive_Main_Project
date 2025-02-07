@@ -106,7 +106,7 @@ urlpatterns = [
     path('chatbot/get_liked_cars/', views.get_chatbot_liked_cars, name='get_chatbot_liked_cars'),
     path('wholeseller/', views.wholeseller, name='wholeseller'),
     path('wholeseller_req/', views.wholeseller_req, name='wholeseller_req'),
-
+    path('wholeseller_admin/', views.wholeseller_admin, name='wholeseller_admin'),
     
 
 

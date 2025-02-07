@@ -2733,3 +2733,8 @@ def wholeseller_req(request):
     # Get all sale requests for the logged-in user
     sale_requests = SellCar.objects.filter(user=request.user).order_by('-id')
     return render(request, 'wholeseller_req.html', {'sale_requests': sale_requests})
+
+def wholeseller_admin(request):
+    return render(request, 'wholeseller_admin.html')
+
+    

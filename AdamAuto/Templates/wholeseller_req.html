@@ -521,7 +521,34 @@
                         car_cc: document.getElementById('swal-input16').value
                     };
 
-                    // Validation checks
+                    // Check for empty fields
+                    const requiredFields = {
+                        'Manufacturer': values.manufacturer,
+                        'Model': values.model,
+                        'Year': values.year,
+                        'Price': values.price,
+                        'Color': values.color,
+                        'Fuel Type': values.fuel_type,
+                        'Kilometers': values.kilometers,
+                        'Transmission': values.transmission,
+                        'Condition': values.condition,
+                        'Registration Number': values.reg_number,
+                        'Insurance Validity': values.insurance_validity,
+                        'Pollution Validity': values.pollution_validity,
+                        'Tax Validity': values.tax_validity,
+                        'Car Type': values.car_type,
+                        'Owner Status': values.owner_status,
+                        'Car CC': values.car_cc
+                    };
+
+                    for (const [fieldName, value] of Object.entries(requiredFields)) {
+                        if (!value || value.length === 0) {
+                            Swal.showValidationMessage(`${fieldName} field cannot be empty`);
+                            return false;
+                        }
+                    }
+
+                    // Registration number validation
                     const regNumberPattern = /^[A-Z]{2}-\d{2}-[A-Z]-\d{4}$/;
                     if (!regNumberPattern.test(values.reg_number)) {
                         Swal.showValidationMessage('Registration number must be in format KL-07-Z-2001');
@@ -546,8 +573,6 @@
                         Swal.showValidationMessage('Tax validity must be at least 20 days from today');
                         return false;
                     }
-
-                    // ... other validations ...
 
                     return values;
                 }
