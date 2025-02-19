@@ -1365,9 +1365,9 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row justify-content-center">
+                    <div class="row justify-content-center px-4">
                         <!-- Standard Plan -->
-                        <div class="col-md-6">
+                        <div class="col-md-6 px-2">
                             <div class="card h-100">
                                 <div class="plan-header" style="background: #000;">
                                     <h3 class="plan-title" style="color: white;">Standard</h3>
@@ -1380,12 +1380,12 @@
                                         <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>30 days listing duration</li>
                                         <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>Priority support</li>
                                     </ul>
-                                    <a href="{% url 'sellcar_dtl' %}?plan=standard" class="btn btn-lg btn-block" style="background: #000; color: white;">Choose Plan</a>
+                                    <a href="{% url 'certified_cars' %}?plan=standard" class="btn btn-lg btn-block" style="background: #000; color: white;">Choose Plan</a>
                                 </div>
                             </div>
                         </div>
                         <!-- Premium Plan -->
-                        <div class="col-md-6">
+                        <div class="col-md-6 px-2">
                             <div class="card h-100">
                                 <div class="plan-header" style="background: #d39e00;">
                                     <h3 class="plan-title" style="color: white;">Premium</h3>
@@ -1398,7 +1398,7 @@
                                         <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>No listing duration</li>
                                         <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>Premium support</li>
                                     </ul>
-                                    <a href="{% url 'sellcar_dtl' %}?plan=premium" class="btn btn-lg btn-block" style="background: #d39e00; color: white;">Choose Plan</a>
+                                    <a href="{% url 'certified_cars' %}?plan=premium" class="btn btn-lg btn-block" style="background: #d39e00; color: white;">Choose Plan</a>
                                 </div>
                             </div>
                         </div>
@@ -1463,6 +1463,14 @@
         .btn-block:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .modal-body {
+            padding: 1.5rem 1rem;
+        }
+        
+        .card {
+            margin: 0;
         }
     </style>
       
