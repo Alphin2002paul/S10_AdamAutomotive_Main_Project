@@ -241,3 +241,60 @@ class CarEnquiry(models.Model):
 
     def __str__(self):
         return f"{self.manufacturer} {self.model_name} - {self.user.username}"
+
+from django.db import models
+from django.utils import timezone
+from datetime import timedelta
+
+class Subscription(models.Model):
+    SUBSCRIPTION_TYPES = (
+        ('free', 'Free'),
+        ('standard', 'Standard'),
+        ('premium', 'Premium')
+    )
+
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled')
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscriptions')
+    transaction_id = models.CharField(max_length=100, unique=True)
+    start_date = models.DateTimeField(default=timezone.now)
+    end_date = models.DateTimeField(null=True, blank=True)
+    subscription_type = models.CharField(max_length=20, choices=SUBSCRIPTION_TYPES, default='free')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payment_mode = models.CharField(max_length=20, default='Online')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # Set end_date based on subscription_type
+        if self.subscription_type == 'standard':
+            self.end_date = self.start_date + timedelta(days=30)
+        elif self.subscription_type == 'premium':
+            self.end_date = self.start_date + timedelta(days=90)
+        elif self.subscription_type == 'free':
+            self.end_date = None
+
+        super().save(*args, **kwargs)
+
+    def is_active(self):
+        if self.subscription_type == 'free':
+            return True
+        return (
+            self.status == 'completed' and 
+            self.end_date is not None and 
+            self.end_date > timezone.now()
+        )
+
+    def __str__(self):
+        return f"{self.user.username}'s {self.subscription_type} subscription"
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Subscription'
+        verbose_name_plural = 'Subscriptions'

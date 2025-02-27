@@ -107,7 +107,14 @@ urlpatterns = [
     path('wholeseller/', views.wholeseller, name='wholeseller'),
     path('wholeseller_req/', views.wholeseller_req, name='wholeseller_req'),
     path('wholeseller_admin/', views.wholeseller_admin, name='wholeseller_admin'),
-    
+    path('process-subscription/', views.process_subscription, name='process_subscription'),
+    path('subscription/details/', views.sub_details, name='sub_details'),
+    path('certifiedusersale_cars/', views.certifiedusersale_cars, name='certifiedusersale_cars'),
+    path('send-subscription-email/', views.send_subscription_email, name='send_subscription_email'),
+    path('cancel-subscription/', views.cancel_subscription, name='cancel_subscription'),
+    path('subscription_receipt/<int:subscription_id>/', views.generate_subscription_receipt_pdf, name='subscription_receipt'),
+
+
 
 
 

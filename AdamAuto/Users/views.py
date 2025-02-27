@@ -2645,7 +2645,10 @@ def perfect_car(request):
     return render(request, 'perfect_car.html')
 
 def certified_cars(request):
-    return render(request, 'certified_cars.html')
+    subscription = None
+    if request.user.is_authenticated:
+        subscription = request.user.subscriptions.filter(status='completed').last()
+    return render(request, 'certified_cars.html', {'subscription': subscription})
 
 def sub_details(request):
     return render(request, 'sub_details.html')
@@ -2752,4 +2755,409 @@ def wholeseller_admin(request):
     }
     return render(request, 'wholeseller_admin.html', context)  # Pass context to template
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+import razorpay
+from .models import Subscription
+import json
+
+@login_required
+@csrf_exempt
+def process_subscription(request):
+    if request.method == 'POST':
+        try:
+            # Parse request data
+            data = json.loads(request.body)
+            
+            # Get payment details
+            razorpay_payment_id = data.get('razorpay_payment_id')
+            subscription_type = data.get('subscription_type')
+            amount = data.get('amount')
+
+            print(f"Received payment data: {data}")  # Debug print
+
+            # Basic validation
+            if not razorpay_payment_id:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Payment ID is missing'
+                })
+
+            # Create subscription without payment verification for now
+            try:
+                subscription = Subscription.objects.create(
+                    user=request.user,
+                    transaction_id=razorpay_payment_id,
+                    subscription_type=subscription_type,
+                    amount=float(amount),
+                    status='completed',
+                    payment_mode='Online'
+                )
+
+                print(f"Created subscription: {subscription.id}")  # Debug print
+
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Subscription processed successfully',
+                    'data': {
+                        'subscription_id': subscription.id,
+                        'type': subscription.subscription_type,
+                        'start_date': subscription.start_date.strftime('%Y-%m-%d %H:%M:%S'),
+                        'end_date': subscription.end_date.strftime('%Y-%m-%d %H:%M:%S') if subscription.end_date else None,
+                        'status': subscription.status
+                    }
+                })
+
+            except Exception as e:
+                print(f"Error creating subscription: {str(e)}")  # Debug print
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Failed to create subscription: {str(e)}'
+                })
+
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {str(e)}")  # Debug print
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid JSON data'
+            })
+        except Exception as e:
+            print(f"Server error: {str(e)}")  # Debug print
+            return JsonResponse({
+                'success': False,
+                'message': f'Server error: {str(e)}'
+            })
+
+    return JsonResponse({
+        'success': False,
+        'message': 'Invalid request method'
+    })
+
+from django.shortcuts import render
+from .models import Subscription
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def sub_details(request):
+    # Get the user's subscription if it exists
+    try:
+        subscription = Subscription.objects.get(user=request.user)
+    except Subscription.DoesNotExist:
+        subscription = None
     
+    context = {
+        'user': request.user,
+        'subscription': subscription
+    }
+    return render(request, 'sub_details.html', context)
+def certifiedusersale_cars(request):
+    return render(request, 'certifiedusersale_cars.html')
+
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+import json
+from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
+
+@csrf_exempt
+def send_subscription_email(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            logger.info(f"Received subscription email request with data: {data}")
+            
+            subscription_type = data.get('subscription_type')
+            amount = data.get('amount')
+            payment_id = data.get('payment_id')
+            user_email = data.get('user_email')
+            user_name = data.get('user_name')
+
+            # Calculate subscription end date
+            start_date = datetime.now()
+            if subscription_type == 'standard':
+                end_date = start_date + timedelta(days=30)
+                max_photos = 5
+                listing_duration = "30 days"
+                ad_limit = "Single advertisement"
+            else:  # premium
+                end_date = start_date + timedelta(days=90)
+                max_photos = "Unlimited"
+                listing_duration = "90 days"
+                ad_limit = "Multiple advertisements"
+
+            # Prepare email context
+            context = {
+                'user_name': user_name,
+                'subscription_type': subscription_type.title(),
+                'amount': amount,
+                'payment_id': payment_id,
+                'start_date': start_date.strftime('%d %B, %Y'),
+                'end_date': end_date.strftime('%d %B, %Y'),
+                'max_photos': max_photos,
+                'listing_duration': listing_duration,
+                'ad_limit': ad_limit
+            }
+
+            try:
+                # Use the correct template path
+                template_path = 'subscription_confirmation.html'
+                
+                # Add debug logging
+                logger.info(f"Attempting to render template: {template_path}")
+                
+                # Render email templates
+                html_message = render_to_string(template_path, context)
+                plain_message = strip_tags(html_message)
+
+                # Send email
+                send_mail(
+                    subject=f'Welcome to Adam Automotive {subscription_type.title()} Membership!',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user_email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+                
+                logger.info(f"Email sent successfully to {user_email}")
+                return JsonResponse({'success': True})
+
+            except Exception as e:
+                logger.error(f"Email sending failed: {str(e)}")
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Email sending failed: {str(e)}'
+                })
+
+        except Exception as e:
+            logger.error(f"Error processing request: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            })
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
+
+def cancel_subscription(request):
+    if request.method == 'POST':
+        try:
+            # Get the subscription for the current user
+            subscription = Subscription.objects.get(user=request.user)
+            
+            # Store subscription details before deletion
+            subscription_type = subscription.subscription_type
+            user_email = request.user.email
+            user_name = request.user.first_name
+            
+            # Delete the subscription
+            subscription.delete()
+            
+            # Send cancellation email
+            subject = 'Subscription Cancellation Confirmation'
+            html_message = render_to_string('subscription_cancellation_email.html', {
+                'user_name': user_name,
+                'subscription_type': subscription_type,
+            })
+            
+            send_mail(
+                subject=subject,
+                message='',
+                html_message=html_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user_email],
+                fail_silently=False,
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Subscription cancelled successfully'
+            })
+            
+        except Subscription.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'No active subscription found'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'Invalid request method'
+    })
+def generate_subscription_receipt_pdf(request, subscription_id):
+    subscription = get_object_or_404(Subscription, id=subscription_id)
+    user = get_object_or_404(User, id=subscription.user.id)
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
+
+    elements = []
+
+    # Custom styles
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='Center', alignment=TA_CENTER))
+    styles.add(ParagraphStyle(name='Right', alignment=TA_RIGHT))
+    styles.add(ParagraphStyle(name='Left', alignment=TA_JUSTIFY))
+    styles.add(ParagraphStyle(name='CustomTitle', parent=styles['Title'], fontSize=24, textColor=colors.darkslategray, spaceAfter=12))
+    styles.add(ParagraphStyle(name='CustomSubtitle', parent=styles['Heading2'], fontSize=18, textColor=colors.darkslategray, spaceAfter=6))
+    styles.add(ParagraphStyle(name='CustomNormal', parent=styles['Normal'], fontSize=10, textColor=colors.black, spaceAfter=6))
+
+    elements.append(Spacer(1, 0.5*inch))
+
+    # Company details
+    elements.append(Paragraph("Adam Automotive", styles['CustomTitle']))
+    elements.append(Paragraph("Adam Towers, Edappally Kochi, Kerala - 683544", styles['Center']))
+    elements.append(Paragraph("Phone: (999) 546-1423 | Email: adamautomotive3@gmail.com", styles['Center']))
+    elements.append(Spacer(1, 0.25*inch))
+
+    # Horizontal line
+    elements.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.darkgray, spaceBefore=1, spaceAfter=1))
+
+    # Invoice title
+    elements.append(Paragraph("SUBSCRIPTION INVOICE", styles['CustomSubtitle']))
+    elements.append(Spacer(1, 0.25*inch))
+    elements.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.darkgray, spaceBefore=1, spaceAfter=1))
+
+    # Customer and subscription details
+    customer_data = [
+        ["Invoice Number:", f"SUB-{subscription.id}"],
+        ["Invoice Date:", subscription.start_date.strftime('%B %d, %Y')],
+        ["Customer Name:", f"{user.first_name} {user.last_name}"],
+        ["Email:", user.email],
+        ["Phone:", user.Phone_number],
+        ["Subscription Type:", subscription.subscription_type.title()],
+        ["Start Date:", subscription.start_date.strftime('%B %d, %Y')],
+        ["End Date:", subscription.end_date.strftime('%B %d, %Y') if subscription.end_date else "Ongoing"],
+    ]
+
+    customer_table = Table(customer_data, colWidths=[2.5*inch, 3.5*inch])
+    customer_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.darkslategray),
+        ('TEXTCOLOR', (1, 0), (1, -1), colors.black),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(customer_table)
+    elements.append(Spacer(1, 0.25*inch))
+
+    # Subscription details
+    subscription_features = {
+        'standard': [
+            "30 days subscription period",
+            "Single advertisement",
+            "Up to 5 photos per listing",
+            "Basic customer support"
+        ],
+        'premium': [
+            "90 days subscription period",
+            "Multiple advertisements",
+            "Unlimited photos per listing",
+            "Priority customer support"
+        ]
+    }
+
+    features = subscription_features.get(subscription.subscription_type.lower(), [])
+    
+    # Features table
+    features_data = [["Subscription Features"]]
+    for feature in features:
+        features_data.append([feature])
+
+    features_table = Table(features_data, colWidths=[6*inch])
+    features_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.darkslategray),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+        ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
+    ]))
+    elements.append(features_table)
+    elements.append(Spacer(1, 0.25*inch))
+
+    # Payment details
+    payment_data = [
+        ["Payment Method:", subscription.payment_mode.title()],
+        ["Transaction ID:", subscription.transaction_id],
+        ["Amount:", f"₹{subscription.amount:,.2f}"],
+        ["Status:", subscription.status.title()],
+    ]
+    payment_table = Table(payment_data, colWidths=[2.5*inch, 3.5*inch])
+    payment_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.darkslategray),
+        ('TEXTCOLOR', (1, 0), (1, -1), colors.black),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(payment_table)
+    elements.append(Spacer(1, 0.25*inch))
+
+    # Terms and conditions
+    elements.append(Paragraph("Terms & Conditions", styles['CustomSubtitle']))
+    elements.append(HRFlowable(width="100%", thickness=1, lineCap='round', color=colors.darkgray, spaceBefore=1, spaceAfter=1))
+    
+    elements.append(Paragraph("1. Subscription fees are non-refundable.", styles['CustomNormal']))
+    elements.append(Paragraph("2. Adam Automotive reserves the right to modify or terminate services.", styles['CustomNormal']))
+    elements.append(Paragraph("3. Features and benefits are subject to change without notice.", styles['CustomNormal']))
+
+    elements.append(Spacer(0.1, 0.1*inch))
+
+    # Thank you message
+    elements.append(Paragraph("Thank you for subscribing to Adam Automotive!", styles['Center']))
+
+    # Footer and border
+    def add_footer_and_border(canvas, doc):
+        canvas.saveState()
+        # Add border
+        canvas.setStrokeColor(colors.darkslategray)
+        canvas.setLineWidth(2)
+        canvas.rect(doc.leftMargin - 5, doc.bottomMargin - 5,
+                   doc.width + 10, doc.height + 10, stroke=1, fill=0)
+        
+        # Add footer
+        canvas.setFont('Helvetica', 9)
+        canvas.setFillColor(colors.darkslategray)
+        footer_text = f"Invoice generated on {subscription.start_date.strftime('%B %d, %Y')} | Page 1 of 1"
+        canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.bottomMargin - 20, footer_text)
+        canvas.restoreState()
+
+    # Build the PDF
+    doc.build(elements, onFirstPage=add_footer_and_border, onLaterPages=add_footer_and_border)
+
+    buffer.seek(0)
+    return HttpResponse(buffer, content_type='application/pdf')
