@@ -3062,7 +3062,7 @@ def generate_subscription_receipt_pdf(request, subscription_id):
     elements.append(customer_table)
     elements.append(Spacer(1, 0.25*inch))
 
-    # Subscription details
+        # Subscription details
     subscription_features = {
         'standard': [
             "30 days subscription period",
@@ -3080,51 +3080,60 @@ def generate_subscription_receipt_pdf(request, subscription_id):
 
     features = subscription_features.get(subscription.subscription_type.lower(), [])
     
-    # Features table
-    features_data = [["Subscription Features"]]
-    for feature in features:
-        features_data.append([feature])
-
-    features_table = Table(features_data, colWidths=[6*inch])
-    features_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.darkslategray),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-        ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
-    ]))
-    elements.append(features_table)
-    elements.append(Spacer(1, 0.25*inch))
-
-    # Payment details
+    # Create data for both tables
+    subscription_data = [["Subscription Details"]] + [[feature] for feature in features]
     payment_data = [
-        ["Payment Method:", subscription.payment_mode.title()],
-        ["Transaction ID:", subscription.transaction_id],
-        ["Amount:", f"₹{subscription.amount:,.2f}"],
-        ["Status:", subscription.status.title()],
+        ["Payment Details"],
+        [f"Payment Method: {subscription.payment_mode.title()}"],
+        [f"Transaction ID: {subscription.transaction_id}"],
+        [f"Amount: ₹{subscription.amount:,.2f}"],
+        [f"Status: {subscription.status.title()}"],
     ]
-    payment_table = Table(payment_data, colWidths=[2.5*inch, 3.5*inch])
-    payment_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('TEXTCOLOR', (0, 0), (0, -1), colors.darkslategray),
-        ('TEXTCOLOR', (1, 0), (1, -1), colors.black),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+
+    # Make both tables same height by adding empty rows if needed
+    max_rows = max(len(subscription_data), len(payment_data))
+    subscription_data.extend([['']] * (max_rows - len(subscription_data)))
+    payment_data.extend([['']] * (max_rows - len(payment_data)))
+
+    # Combine tables side by side
+    combined_data = []
+    for i in range(max_rows):
+        combined_data.append(subscription_data[i] + payment_data[i])
+
+    # Create combined table
+    combined_table = Table(combined_data, colWidths=[3*inch, 3*inch])
+    combined_table.setStyle(TableStyle([
+        # Headers style (first row)
+        ('BACKGROUND', (0, 0), (1, 0), colors.darkslategray),
+        ('TEXTCOLOR', (0, 0), (1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (1, 0), 12),
+        
+        # Content style
+        ('BACKGROUND', (0, 1), (1, -1), colors.white),
+        ('TEXTCOLOR', (0, 1), (1, -1), colors.black),
+        ('ALIGN', (0, 1), (1, -1), 'LEFT'),
+        ('FONTNAME', (0, 1), (1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (1, -1), 10),
+        ('TOPPADDING', (0, 1), (1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (1, -1), 6),
+        
+        # Grid
+        ('GRID', (0, 0), (0, -1), 1, colors.lightgrey),  # Left table grid
+        ('GRID', (1, 0), (1, -1), 1, colors.lightgrey),  # Right table grid
+        ('LINEBELOW', (0, 0), (1, 0), 1, colors.darkslategray),  # Header underline
+        
+        # Spacing between tables
+        ('LEFTPADDING', (0, 0), (1, -1), 10),
+        ('RIGHTPADDING', (0, 0), (1, -1), 10),
+        
+        # Remove grid lines for empty rows
+        ('LINEBELOW', (0, -1), (1, -1), 0, colors.white),
     ]))
-    elements.append(payment_table)
+
+    elements.append(combined_table)
     elements.append(Spacer(1, 0.25*inch))
 
     # Terms and conditions
