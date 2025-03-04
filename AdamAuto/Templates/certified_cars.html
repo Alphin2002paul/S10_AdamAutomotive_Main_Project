@@ -136,7 +136,32 @@
         </div>
     </nav>
 
-   
+    {% if subscription_expired %}
+    <!-- Subscription Expired Modal -->
+    <div class="modal fade" id="subscriptionExpiredModal" tabindex="-1" role="dialog" aria-labelledby="subscriptionExpiredModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: #000; color: white;">
+                    <h5 class="modal-title" id="subscriptionExpiredModalLabel">
+                        <span style="color: #999999;">Adam</span>
+                        <span style="color: #d39e00;">Automotive</span> - Subscription Expired
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true" style="color: white;">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-exclamation-circle text-warning" style="font-size: 48px;"></i>
+                    <h4 class="mt-3">Your Subscription Has Expired</h4>
+                    <p>Please renew your subscription to continue accessing premium services like selling your car through Adam Automotive.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <a href="{% url 'sub_details' %}" class="btn btn-primary" style="background: #d39e00 !important; border-color: #d39e00 !important;">Renew Subscription</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
     $(document).ready(function() {
