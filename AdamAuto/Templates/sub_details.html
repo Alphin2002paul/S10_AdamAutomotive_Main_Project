@@ -574,6 +574,7 @@
         <!-- New Purchase Cards with Pagination -->
         <div class="col-lg-8">
           <h2 class="mb-4 text-center">Subscription Details</h2><hr>
+          {% if subscription and subscription.is_active %}
           <!-- Subscription Card -->
           <div class="subscription-card">
             <div class="subscription-header">
@@ -612,9 +613,14 @@
                 <h4><i class="fas fa-star"></i> Plan Benefits</h4>
                 <ul class="benefits-list">
                   {% if not subscription %}
-                    <li><i class="fas fa-check-circle"></i> Basic Access</li>
-                    <li><i class="fas fa-check-circle"></i> Limited Features</li>
+                    <li><i class="fas fa-check-circle"></i> Basic Access to Car Listings</li>
+                    <li><i class="fas fa-check-circle"></i> View Car Details and Specifications</li>
+                    <li><i class="fas fa-check-circle"></i> Basic Search Functionality</li>
+                    <li><i class="fas fa-check-circle"></i> Contact Sellers Through Platform</li>
+                    <li><i class="fas fa-check-circle"></i> Single Photo Per Listing</li>
+                    <li><i class="fas fa-check-circle"></i> 7 Days Listing Duration</li>
                     <li><i class="fas fa-check-circle"></i> Standard Customer Support</li>
+                    <li><i class="fas fa-check-circle"></i> Basic Profile Management</li>
                   {% elif subscription.subscription_type == 'premium' %}
                     <li><i class="fas fa-check-circle"></i>Premium Access to Certified Sales</li>
                     <li><i class="fas fa-check-circle"></i>Can List Multiple Advertisment</li>
@@ -644,6 +650,16 @@
               {% endif %}
             </div>
           </div>
+          {% else %}
+          <!-- Show subscription modal when no active subscription -->
+          <div class="text-center">
+            <h3>No Active Subscription</h3>
+            <p>Your subscription has expired or you haven't subscribed yet.</p>
+            <button class="btn-change mt-3" data-toggle="modal" data-target="#subscriptionModal">
+              <i class="fas fa-plus-circle"></i> Get Subscription
+            </button>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>

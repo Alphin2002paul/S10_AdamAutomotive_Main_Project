@@ -2646,9 +2646,19 @@ def perfect_car(request):
 
 def certified_cars(request):
     subscription = None
+    subscription_expired = False
     if request.user.is_authenticated:
         subscription = request.user.subscriptions.filter(status='completed').last()
-    return render(request, 'certified_cars.html', {'subscription': subscription})
+        if subscription:
+            # Check if subscription has expired
+            from django.utils import timezone
+            if subscription.end_date and subscription.end_date < timezone.now():
+                subscription_expired = True
+                subscription = None  # Reset subscription if expired
+    return render(request, 'certified_cars.html', {
+        'subscription': subscription,
+        'subscription_expired': subscription_expired
+    })
 
 def sub_details(request):
     return render(request, 'sub_details.html')

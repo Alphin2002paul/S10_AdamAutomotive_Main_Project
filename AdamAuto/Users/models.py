@@ -257,7 +257,8 @@ class Subscription(models.Model):
         ('pending', 'Pending'),
         ('completed', 'Completed'),
         ('failed', 'Failed'),
-        ('cancelled', 'Cancelled')
+        ('cancelled', 'Cancelled'),
+        ('expired', 'Expired')  # Added expired status
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscriptions')
@@ -273,23 +274,38 @@ class Subscription(models.Model):
 
     def save(self, *args, **kwargs):
         # Set end_date based on subscription_type
-        if self.subscription_type == 'standard':
-            self.end_date = self.start_date + timedelta(days=30)
-        elif self.subscription_type == 'premium':
-            self.end_date = self.start_date + timedelta(days=90)
-        elif self.subscription_type == 'free':
-            self.end_date = None
-
+        if not self.end_date and self.subscription_type != 'free':
+            if self.subscription_type == 'standard':
+                self.end_date = self.start_date + timedelta(days=30)
+            elif self.subscription_type == 'premium':
+                self.end_date = self.start_date + timedelta(days=90)
         super().save(*args, **kwargs)
 
     def is_active(self):
-        if self.subscription_type == 'free':
+        if self.status not in ['completed', 'pending']:
+            return False
+        if not self.end_date:
             return True
-        return (
-            self.status == 'completed' and 
-            self.end_date is not None and 
-            self.end_date > timezone.now()
+        return timezone.now() <= self.end_date
+
+    @classmethod
+    def delete_expired_subscriptions(cls):
+        """
+        Delete all expired subscriptions that are past their end date
+        """
+        now = timezone.now()
+        expired_subscriptions = cls.objects.filter(
+            end_date__lt=now,
+            status='completed'
         )
+        
+        # Update status to expired before deletion
+        expired_subscriptions.update(status='expired')
+        
+        # Delete the expired subscriptions
+        expired_subscriptions.delete()
+        
+        return len(expired_subscriptions)
 
     def __str__(self):
         return f"{self.user.username}'s {self.subscription_type} subscription"
