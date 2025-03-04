@@ -81,6 +81,13 @@
     padding-top: 0;
 }
     </style>
+
+    <!-- Add jQuery to head section -->
+    <link rel="stylesheet" href="{% static 'displaycar/css/animate.css' %}" />
+    <link rel="stylesheet" href="{% static 'displaycar/css/owl.carousel.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'displaycar/css/owl.theme.default.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'displaycar/css/magnific-popup.css' %}" />
+    <script src="{% static 'displaycar/js/jquery.min.js' %}"></script>
 </head>
 
 <body>
@@ -129,37 +136,18 @@
         </div>
     </nav>
 
-    {% if subscription_expired %}
-    <!-- Subscription Expired Modal -->
-    <div class="modal fade" id="subscriptionExpiredModal" tabindex="-1" role="dialog" aria-labelledby="subscriptionExpiredModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header" style="background: #000; color: white;">
-                    <h5 class="modal-title" id="subscriptionExpiredModalLabel">
-                        <span style="color: #999999;">Adam</span>
-                        <span style="color: #d39e00;">Automotive</span> - Subscription Expired
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true" style="color: white;">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body text-center">
-                    <i class="fas fa-exclamation-circle text-warning" style="font-size: 48px;"></i>
-                    <h4 class="mt-3">Your Subscription Has Expired</h4>
-                    <p>Please renew your subscription to continue accessing premium services like selling your car through Adam Automotive.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <a href="{% url 'sub_details' %}" class="btn btn-primary" style="background: #d39e00 !important; border-color: #d39e00 !important;">Renew Subscription</a>
-                </div>
-            </div>
-        </div>
-    </div>
+   
 
     <script>
-        $(document).ready(function() {
+    $(document).ready(function() {
+        $('#subscriptionExpiredModal').modal('show');
+        
+        // Also show modal when clicking the expired subscription button
+        $('[data-target="#subscriptionExpiredModal"]').click(function(e) {
+            e.preventDefault();
             $('#subscriptionExpiredModal').modal('show');
         });
+    });
     </script>
     {% endif %}
 
@@ -172,20 +160,20 @@
                         <h1 class="mb-4">Buy Your Dream Car Through Adam Automotive</h1>
                         <p style="font-size: 18px;">Buying A Car is Not Just Buying a Machine It's an Emotion For Every Auto Enthusiast</p>
                         <div class="mt-4">
-                            {% if subscription and subscription.subscription_type == 'premium' or subscription.subscription_type == 'standard' %}
-                                <a href="{% url 'certifiedusersale_cars' %}" class="btn btn-primary py-3 px-4">
-                                    <i class="fas fa-car mr-2"></i>Sell Your Car Through Adam Automotive 
-                                </a>
-                            {% else %}
-                                {% if subscription_expired %}
-                                <a href="#" class="btn btn-primary py-3 px-4" data-toggle="modal" data-target="#subscriptionExpiredModal">
-                                    <i class="fas fa-car mr-2"></i>Sell Your Car Through Adam Automotive
-                                </a>
+                            {% if subscription and subscription.subscription_type == 'premium' or subscription and subscription.subscription_type == 'standard' %}
+                                {% if subscription.is_expired %}
+                                    <a href="#" class="btn btn-primary py-3 px-4" data-toggle="modal" data-target="#subscriptionExpiredModal">
+                                        <i class="fas fa-car mr-2"></i>Sell Your Car Through Adam Automotive
+                                    </a>
                                 {% else %}
+                                    <a href="{% url 'certified_cars' %}?action=sell" class="btn btn-primary py-3 px-4">
+                                        <i class="fas fa-car mr-2"></i>Sell Your Car Through Adam Automotive 
+                                    </a>
+                                {% endif %}
+                            {% else %}
                                 <a href="#" class="btn btn-primary py-3 px-4" data-toggle="modal" data-target="#subscriptionModal">
                                     <i class="fas fa-car mr-2"></i>Sell Your Car Through Adam Automotive
                                 </a>
-                                {% endif %}
                             {% endif %}
                         </div>
                     </div>
@@ -270,9 +258,9 @@
                             </a>
                         </div>
                         <div class="text">
-                            <h2 class="mb-0">{{ car.manufacturer.company_name }}</h2>
+                            <h2 class="mb-0">{{ car.manufacturer }}</h2>
                             <div class="d-flex mb-3">
-                                <span class="mb-0" style="color:#d39e00">Model Name: <span style="color:black">{{ car.model_name.model_name }}</span></span>
+                                <span class="mb-0" style="color:#d39e00">Model Name: <span style="color:black">{{ car.model_name }}</span></span>
                             </div>
                             <div class="d-flex mb-3">
                                 <span class="mb-0" style="color:#d39e00">Price: ₹ <span style="color:black">{{ car.price }}</span></span>
@@ -281,9 +269,8 @@
                                 <span class="mb-0" style="color:#d39e00">Status: <span style="color:red">{{ car.car_status }}</span></span>
                             </div>
                             <p class="d-flex mb-0 d-block">
-                                <button class="btn {% if car.id in liked_cars %}btn-secondary{% else %}btn-primary{% endif %} py-2 mr-1 like-btn" data-car-id="{{ car.id }}">
-                                    {% if car.id in liked_cars %}Remove Like{% else %}Add to Liked{% endif %}
-                                </button>
+                              <a style="width:47%" href="{% url 'car_detail' car.id %}" class="btn custom-btn py-2 ml-1">Chat Now</a>
+
                                 <a style="width:47%" href="{% url 'car_detail' car.id %}" class="btn custom-btn py-2 ml-1">Details</a>
                             </p>
                         </div>
@@ -1423,7 +1410,6 @@
                                     <ul class="list-unstyled mt-3 mb-4">
                                         <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>Standard Access to Certified Sales</li>
                                         <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>Single Advertisment Only</li>
-                                        <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>5 photos Allowed for Listing</li>
                                         <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>30 days Listing Duration</li>
                                     </ul>
                                     <button onclick="initializePayment('standard', 199)" class="btn btn-lg btn-block" style="background: #000; color: white;">Choose Plan</button>
@@ -1441,8 +1427,7 @@
                                     <ul class="list-unstyled mt-3 mb-4">
                                         <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>Premium Access to Certified Sales</li>
                                         <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>Can List Multiple Advertisment</li>
-                                        <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>Unlimited Photos Allowed For Listing</li>
-                                        <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>90 Days Listing Duration</li>
+                                        <li><i class="fas fa-check mr-2" style="color: #d39e00;"></i>No Listing Duration</li>
                                     </ul>
                                     <button onclick="initializePayment('premium', 399)" class="btn btn-lg btn-block" style="background: #d39e00; color: white;">Choose Plan</button>
                                 </div>

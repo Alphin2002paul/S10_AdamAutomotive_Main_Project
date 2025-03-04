@@ -33,6 +33,214 @@
             'X-CSRFToken': '{{ csrf_token }}'
         }
     });
+
+    // Function to validate color input
+    function validateColor(input) {
+        const colorRegex = /^[A-Za-z\s]+$/;
+        const color = input.value.trim();
+        const errorElement = document.getElementById('colorError');
+        
+        if (!colorRegex.test(color)) {
+            errorElement.textContent = 'Color should only contain letters and spaces';
+            input.setCustomValidity('Invalid color format');
+            input.classList.add('is-invalid');
+            return false;
+        } else {
+            errorElement.textContent = '';
+            input.setCustomValidity('');
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            return true;
+        }
+    }
+
+    // Function to validate registration number
+    function validateRegistrationNumber(input) {
+        const regNumberRegex = /^[A-Z]{2}-\d{2}-[A-Z]{2}-\d{4}$/;
+        const regNumber = input.value.trim().toUpperCase();
+        const errorElement = document.getElementById('regNumberError');
+        
+        if (!regNumberRegex.test(regNumber)) {
+            errorElement.textContent = 'Registration number should be in format: KL-07-AA-0000';
+            input.setCustomValidity('Invalid registration number format');
+            input.classList.add('is-invalid');
+            return false;
+        } else {
+            errorElement.textContent = '';
+            input.setCustomValidity('');
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            return true;
+        }
+    }
+
+    // Function to validate all form fields
+    function validateForm() {
+        const colorInput = document.getElementById('color');
+        const regNumberInput = document.getElementById('reg_number');
+        
+        const isColorValid = validateColor(colorInput);
+        const isRegNumberValid = validateRegistrationNumber(regNumberInput);
+        
+        // Check all other required fields
+        const requiredFields = document.querySelectorAll('#sellCarForm [required]');
+        let allFieldsValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                const errorId = field.id + 'Error';
+                const errorElement = document.getElementById(errorId);
+                if (errorElement) {
+                    errorElement.textContent = 'This field is required';
+                }
+                allFieldsValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+
+        return isColorValid && isRegNumberValid && allFieldsValid;
+    }
+
+    // Add event listeners for real-time validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const colorInput = document.getElementById('color');
+        const regNumberInput = document.getElementById('reg_number');
+        const form = document.getElementById('sellCarForm');
+
+        // Add validation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .is-invalid {
+                border-color: #dc3545 !important;
+                background-color: #fff8f8 !important;
+            }
+            .is-valid {
+                border-color: #28a745 !important;
+                background-color: #f8fff8 !important;
+            }
+            .error-message {
+                color: #dc3545;
+                font-size: 0.875em;
+                margin-top: 0.25rem;
+            }
+        `;
+        document.head.appendChild(style);
+
+        colorInput.addEventListener('input', function() {
+            validateColor(this);
+        });
+
+        regNumberInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+            validateRegistrationNumber(this);
+        });
+
+        // Format registration number as user types
+        regNumberInput.addEventListener('keyup', function(e) {
+            let value = this.value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+            let formattedValue = '';
+            
+            if (value.length > 0) {
+                formattedValue = value.slice(0, 2);
+                if (value.length > 2) {
+                    formattedValue += '-' + value.slice(2, 4);
+                    if (value.length > 4) {
+                        formattedValue += '-' + value.slice(4, 6);
+                        if (value.length > 6) {
+                            formattedValue += '-' + value.slice(6, 10);
+                        }
+                    }
+                }
+                this.value = formattedValue;
+            }
+        });
+
+        // Add form submit validation
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); // Always prevent default submission first
+            
+            if (validateForm()) {
+                // If validation passes, show success message and submit
+                Swal.fire({
+                    title: 'Validating...',
+                    text: 'Please wait while we validate your information',
+                    timer: 1000,
+                    timerProgressBar: true,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                }).then((result) => {
+                    if (result.dismiss === Swal.DismissReason.timer) {
+                        // Create FormData and submit
+                        const formData = new FormData(this);
+                        $.ajax({
+                            url: "{% url 'submit_certified_car' %}",
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function(response) {
+                                if (response.status === 'success') {
+                                    Swal.fire({
+                                        title: 'Success!',
+                                        text: 'Your car has been submitted for certification.',
+                                        icon: 'success'
+                                    }).then(() => {
+                                        window.location.href = "{% url 'main' %}";
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Error!',
+                                        text: response.message || 'Something went wrong.',
+                                        icon: 'error'
+                                    });
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: 'Something went wrong. Please try again.',
+                                    icon: 'error'
+                                });
+                            }
+                        });
+                    }
+                });
+            } else {
+                // If validation fails, show error message
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Please check all fields and correct any errors before submitting.',
+                    icon: 'error',
+                    confirmButtonColor: '#d39e00'
+                });
+            }
+        });
+
+        // Add validation on blur for all required fields
+        const requiredFields = document.querySelectorAll('#sellCarForm [required]');
+        requiredFields.forEach(field => {
+            field.addEventListener('blur', function() {
+                if (!this.value.trim()) {
+                    this.classList.add('is-invalid');
+                    const errorId = this.id + 'Error';
+                    const errorElement = document.getElementById(errorId);
+                    if (errorElement) {
+                        errorElement.textContent = 'This field is required';
+                    }
+                } else {
+                    this.classList.remove('is-invalid');
+                    const errorId = this.id + 'Error';
+                    const errorElement = document.getElementById(errorId);
+                    if (errorElement) {
+                        errorElement.textContent = '';
+                    }
+                }
+            });
+        });
+    });
     </script>
 
     <style>
@@ -119,7 +327,7 @@
 
     <section class="ftco-section bg-light">
       <div class="container">
-        <h2>Sell Your Car</h2>
+        <h2>Certified Car Sale</h2>
         <hr />
         <div class="container mt-5">
           <form id="sellCarForm" method="POST" enctype="multipart/form-data">
@@ -431,16 +639,16 @@
           var formData = new FormData(this);
           
           $.ajax({
-            url: "{% url 'sellcar_dtl' %}",
+            url: "{% url 'submit_certified_car' %}",
             type: 'POST',
             data: formData,
             processData: false,
             contentType: false,
             success: function(response) {
-              if (response.success) {
+              if (response.status === 'success') {
                 Swal.fire({
                   title: 'Success!',
-                  text: 'Your car details have been submitted successfully.',
+                  text: 'Your car has been submitted for certification.',
                   icon: 'success'
                 }).then(() => {
                   window.location.href = "{% url 'main' %}";
@@ -1091,31 +1299,30 @@
                   </div>
                 </div>
               </div>`;
-          }
-        } catch (error) {
-          // Remove typing indicator in case of error
-          const typingIndicator = document.getElementById('typing-indicator');
-          if (typingIndicator) {
-            typingIndicator.remove();
-          }
-          
-          // Show error message
-          messagesDiv.innerHTML += `
-            <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
-              <div style="max-width: 80%;">
-                <div style="background-color: #fff0f0; color: #d32f2f; padding: 8px 12px; border-radius: 12px 12px 12px 0;">
-                  I apologize, but I'm having trouble connecting right now. Please try again.
+          } catch (error) {
+            // Remove typing indicator in case of error
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+              typingIndicator.remove();
+            }
+            
+            // Show error message
+            messagesDiv.innerHTML += `
+              <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                <div style="max-width: 80%;">
+                  <div style="background-color: #fff0f0; color: #d32f2f; padding: 8px 12px; border-radius: 12px 12px 12px 0;">
+                    I apologize, but I'm having trouble connecting right now. Please try again.
+                  </div>
+                  <div style="font-size: 10px; color: #666;">
+                    ${timestamp}
+                  </div>
                 </div>
-                <div style="font-size: 10px; color: #666;">
-                  ${timestamp}
-                </div>
-              </div>
-            </div>`;
+              </div>`;
+          }
         }
-      }
-      
-      // Scroll to bottom after new messages
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        // Scroll to bottom after new messages
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
     async function fetchUserInfo() {

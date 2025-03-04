@@ -113,15 +113,13 @@ urlpatterns = [
     path('send-subscription-email/', views.send_subscription_email, name='send_subscription_email'),
     path('cancel-subscription/', views.cancel_subscription, name='cancel_subscription'),
     path('subscription_receipt/<int:subscription_id>/', views.generate_subscription_receipt_pdf, name='subscription_receipt'),
-
-
-
-
-
-
-
-
-
+    path('submit_certified_car/', views.submit_certified_car, name='submit_certified_car'),
+    path('listedcar-sub/', views.listedcar_sub, name='listedcar_sub'),
+    path('cancel_car_listing/', views.cancel_car_listing, name='cancel_car_listing'),
+    path('get_car_details/<int:car_id>/', views.get_car_details, name='get_car_details'),
+    path('delete_car_image/<int:image_id>/', views.delete_car_image, name='delete_car_image'),
+    path('edit_car/<int:car_id>/', views.edit_car, name='edit_car'),
+    
 ]
 
 if settings.DEBUG:

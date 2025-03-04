@@ -314,3 +314,38 @@ class Subscription(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Subscription'
         verbose_name_plural = 'Subscriptions'
+
+class CertifiedCar(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    manufacturer = models.CharField(max_length=100)
+    model_name = models.CharField(max_length=100)
+    year = models.IntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    color = models.CharField(max_length=50)
+    fuel_type = models.CharField(max_length=20)
+    kilometers = models.IntegerField()
+    transmission = models.CharField(max_length=20)
+    condition = models.TextField()
+    reg_number = models.CharField(max_length=20, unique=True)
+    insurance_validity = models.DateField()
+    pollution_validity = models.DateField()
+    tax_validity = models.DateField()
+    car_type = models.CharField(max_length=50)
+    owner_status = models.IntegerField()
+    car_cc = models.IntegerField()
+    car_status = models.CharField(max_length=20, default='Pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.manufacturer} {self.model_name} - {self.user.username}"
+
+    class Meta:
+        unique_together = ['user', 'reg_number']
+
+class CertifiedCarImage(models.Model):
+    certified_car = models.ForeignKey(CertifiedCar, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='certified_car_images/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for {self.certified_car} - {self.created_at}"

@@ -21,6 +21,9 @@ import re
 import sys
 import os
 from .ml import make_prediction
+from django.utils import timezone
+from .models import Subscription
+from datetime import datetime
 
 users = get_user_model()
 
@@ -2644,21 +2647,90 @@ def deny_test_drive(request):
 def perfect_car(request):
     return render(request, 'perfect_car.html')
 
+from .models import CertifiedCar
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils import timezone
+
 def certified_cars(request):
+    # Check if user is authenticated and has active subscription
     subscription = None
     subscription_expired = False
+    
     if request.user.is_authenticated:
-        subscription = request.user.subscriptions.filter(status='completed').last()
-        if subscription:
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+            # Convert end_date to date if it's a datetime
+            end_date = subscription.end_date
+            if isinstance(end_date, datetime):
+                end_date = end_date.date()
+            
             # Check if subscription has expired
-            from django.utils import timezone
-            if subscription.end_date and subscription.end_date < timezone.now():
-                subscription_expired = True
-                subscription = None  # Reset subscription if expired
-    return render(request, 'certified_cars.html', {
+            subscription_expired = end_date < timezone.now().date()
+            
+            # Handle sell action only if subscription is valid
+            if request.GET.get('action') == 'sell':
+                if subscription and subscription.subscription_type in ['premium', 'standard'] and not subscription_expired:
+                    return redirect('certifiedusersale_cars')
+                else:
+                    subscription_expired = True  # Force show modal for expired/no subscription
+                    
+        except Subscription.DoesNotExist:
+            subscription = None
+            subscription_expired = True  # Show modal for users without subscription
+
+    # Get all cars with status 'Approved'
+    cars = CertifiedCar.objects.filter(car_status='Approved')
+    brands = Tbl_Company.objects.all()
+
+    # Apply filters
+    search_query = request.GET.get('search')
+    brand = request.GET.get('brand')
+    price_range = request.GET.get('price_range')
+    year = request.GET.get('year')
+
+    if search_query:
+        cars = cars.filter(
+            Q(manufacturer__company_name__icontains=search_query) |
+            Q(model_name__model_name__icontains=search_query)
+        )
+
+    if brand:
+        cars = cars.filter(manufacturer_id=brand)
+
+    if price_range:
+        if price_range == '5000000+':
+            cars = cars.filter(price__gte=5000000)
+        else:
+            min_price, max_price = map(int, price_range.split('-'))
+            cars = cars.filter(price__gte=min_price, price__lte=max_price)
+
+    if year:
+        cars = cars.filter(year__gte=int(year))
+
+    # Check if there are any cars after filtering
+    no_cars = cars.count() == 0
+
+    # Pagination
+    paginator = Paginator(cars, 6)  # Show 6 cars per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Get liked cars if user is authenticated
+    liked_cars = []
+    if request.user.is_authenticated:
+        liked_cars = LikedCar.objects.filter(user=request.user).values_list('car_id', flat=True)
+
+    context = {
+        'page_obj': page_obj,
+        'liked_cars': liked_cars,
+        'brands': brands,
+        'no_cars': no_cars,
         'subscription': subscription,
-        'subscription_expired': subscription_expired
-    })
+        'subscription_expired': subscription_expired,
+    }
+
+    return render(request, 'certified_cars.html', context)
 
 def sub_details(request):
     return render(request, 'sub_details.html')
@@ -3180,3 +3252,304 @@ def generate_subscription_receipt_pdf(request, subscription_id):
 
     buffer.seek(0)
     return HttpResponse(buffer, content_type='application/pdf')
+
+
+from .models import CertifiedCar, CertifiedCarImage  # Add this import at the top of the file
+
+@login_required
+@csrf_exempt
+def submit_certified_car(request):
+    if request.method == 'POST':
+        try:
+            # Create a new certified car entry
+            car_data = {
+                'user': request.user,
+                'manufacturer': request.POST.get('manufacturer'),
+                'model_name': request.POST.get('model'),
+                'year': request.POST.get('year'),
+                'price': request.POST.get('price'),
+                'color': request.POST.get('color'),
+                'fuel_type': request.POST.get('fuel_type'),
+                'kilometers': request.POST.get('kilometers'),
+                'transmission': request.POST.get('transmission'),
+                'condition': request.POST.get('condition'),
+                'reg_number': request.POST.get('reg_number'),
+                'insurance_validity': request.POST.get('insurance_validity'),
+                'pollution_validity': request.POST.get('pollution_validity'),
+                'tax_validity': request.POST.get('tax_validity'),
+                'car_type': request.POST.get('car_type'),
+                'owner_status': request.POST.get('owner_status'),
+                'car_cc': request.POST.get('car_cc'),
+                'car_status': 'Pending'  # Default status
+            }
+            
+            certified_car = CertifiedCar.objects.create(**car_data)
+            
+            # Handle multiple image uploads
+            images = request.FILES.getlist('images')
+            for image in images:
+                CertifiedCarImage.objects.create(
+                    certified_car=certified_car,
+                    image=image
+                )
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Car submitted successfully for certification'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+    
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import CertifiedCar, CertifiedCarImage
+
+@login_required
+def listedcar_sub(request):
+    # Get all certified cars for the logged-in user
+    certified_cars = CertifiedCar.objects.filter(user=request.user).order_by('-created_at')
+    
+    context = {
+        'listings': certified_cars
+    }
+    
+    return render(request, 'listedcar_sub.html', context)
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from .models import CertifiedCar
+
+@login_required
+@require_POST
+def cancel_car_listing(request, car_id):
+    try:
+        # Get the car listing and verify ownership
+        car = CertifiedCar.objects.get(id=car_id, user=request.user)
+        
+        # Delete the car listing
+        car.delete()
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Car listing has been cancelled successfully'
+        })
+    except CertifiedCar.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Car listing not found or you do not have permission to cancel it'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+@login_required
+def get_car_details(request, car_id):
+    try:
+        car = CertifiedCar.objects.get(id=car_id, user=request.user)
+        images = car.images.all()
+        
+        car_data = {
+            'id': car.id,
+            'manufacturer': car.manufacturer,
+            'model_name': car.model_name,
+            'year': car.year,
+            'price': str(car.price),
+            'color': car.color,
+            'fuel_type': car.fuel_type,
+            'kilometers': car.kilometers,
+            'transmission': car.transmission,
+            'condition': car.condition,
+            'reg_number': car.reg_number,
+            'insurance_validity': car.insurance_validity.strftime('%Y-%m-%d'),
+            'pollution_validity': car.pollution_validity.strftime('%Y-%m-%d'),
+            'tax_validity': car.tax_validity.strftime('%Y-%m-%d'),
+            'car_type': car.car_type,
+            'owner_status': car.owner_status,
+            'car_cc': car.car_cc,
+            'images': [{'id': img.id, 'url': img.image.url} for img in images]
+        }
+        
+        return JsonResponse({
+            'status': 'success',
+            'car': car_data
+        })
+    except CertifiedCar.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Car not found or you do not have permission to edit it'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+@login_required
+@require_POST
+def delete_car_image(request, image_id):
+    try:
+        image = CertifiedCarImage.objects.get(id=image_id, certified_car__user=request.user)
+        image.delete()
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Image deleted successfully'
+        })
+    except CertifiedCarImage.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Image not found or you do not have permission to delete it'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+@login_required
+@require_POST
+def edit_car(request, car_id):
+    try:
+        car = CertifiedCar.objects.get(id=car_id, user=request.user)
+        
+        # Update car details
+        try:
+            # Basic validation
+            if not all([
+                request.POST.get('manufacturer'),
+                request.POST.get('model_name'),
+                request.POST.get('year'),
+                request.POST.get('price'),
+                request.POST.get('color'),
+                request.POST.get('fuel_type'),
+                request.POST.get('kilometers'),
+                request.POST.get('transmission'),
+                request.POST.get('condition'),
+                request.POST.get('reg_number'),
+                request.POST.get('insurance_validity'),
+                request.POST.get('pollution_validity'),
+                request.POST.get('tax_validity'),
+                request.POST.get('car_type'),
+                request.POST.get('owner_status'),
+                request.POST.get('car_cc')
+            ]):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'All fields are required'
+                }, status=400)
+
+            # Year validation (2010-2025)
+            try:
+                year = int(request.POST.get('year'))
+                current_year = datetime.now().year
+                if year < 2010 or year > current_year + 1:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': f'Year must be between 2010 and {current_year + 1}'
+                    }, status=400)
+            except ValueError:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Invalid year format'
+                }, status=400)
+
+            # Color validation (only letters and spaces)
+            color = request.POST.get('color').strip()
+            if not all(c.isalpha() or c.isspace() for c in color):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Color must contain only letters'
+                }, status=400)
+
+            # Registration number validation (KL-XX-XX-XXXX format)
+            reg_number = request.POST.get('reg_number').upper()
+            reg_pattern = r'^[A-Z]{2}-\d{2}-[A-Z]{2}-\d{4}$'
+            if not re.match(reg_pattern, reg_number):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Registration number must be in format: KL-07-ZZ-0000'
+                }, status=400)
+
+            # Date validation (current date + 2 months minimum)
+            min_date = datetime.now().date() + timedelta(days=60)
+            try:
+                insurance_date = datetime.strptime(request.POST.get('insurance_validity'), '%Y-%m-%d').date()
+                pollution_date = datetime.strptime(request.POST.get('pollution_validity'), '%Y-%m-%d').date()
+                tax_date = datetime.strptime(request.POST.get('tax_validity'), '%Y-%m-%d').date()
+
+                if any(date < min_date for date in [insurance_date, pollution_date, tax_date]):
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Validity dates must be at least 2 months from today'
+                    }, status=400)
+            except ValueError:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Invalid date format'
+                }, status=400)
+
+            # Update car details
+            car.manufacturer = request.POST.get('manufacturer')
+            car.model_name = request.POST.get('model_name')
+            car.year = year
+            car.price = float(request.POST.get('price'))
+            car.color = color
+            car.fuel_type = request.POST.get('fuel_type')
+            car.kilometers = int(request.POST.get('kilometers'))
+            car.transmission = request.POST.get('transmission')
+            car.condition = request.POST.get('condition')
+            car.reg_number = reg_number
+            car.insurance_validity = insurance_date
+            car.pollution_validity = pollution_date
+            car.tax_validity = tax_date
+            car.car_type = request.POST.get('car_type')
+            car.owner_status = int(request.POST.get('owner_status'))
+            car.car_cc = int(request.POST.get('car_cc'))
+
+            # Handle new images
+            new_images = request.FILES.getlist('new_images')
+            current_image_count = car.images.count()
+            if current_image_count + len(new_images) > 5:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Maximum 5 images allowed. You can add {5 - current_image_count} more images.'
+                }, status=400)
+
+            # Save the car and new images
+            car.save()
+            for image in new_images:
+                CertifiedCarImage.objects.create(certified_car=car, image=image)
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Car details updated successfully'
+            })
+
+        except (ValueError, TypeError) as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Invalid data format: {str(e)}'
+            }, status=400)
+
+    except CertifiedCar.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Car not found or you do not have permission to edit it'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
