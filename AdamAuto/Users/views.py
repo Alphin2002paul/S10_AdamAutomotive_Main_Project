@@ -478,12 +478,12 @@ def userdisplaycarnologin_dtl(request):
 
     if search_query:
         cars = cars.filter(
-            Q(manufacturer__company_name__icontains=search_query) |
-            Q(model_name__model_name__icontains=search_query)
-        )
+            Q(model_name__icontains=search_query) |
+            Q(car_type__icontains=search_query)
+        ).distinct()
 
     if brand:
-        cars = cars.filter(manufacturer_id=brand)
+        cars = cars.filter(manufacturer=brand)
 
     if price_range:
         if price_range == '5000000+':
@@ -493,8 +493,9 @@ def userdisplaycarnologin_dtl(request):
             cars = cars.filter(price__gte=min_price, price__lte=max_price)
 
     if year:
-        cars = cars.filter(year__gte=int(year))
+        cars = cars.filter(year=year)
 
+    # Check if there are any cars after filtering
     no_cars = cars.count() == 0
 
     # Pagination
@@ -564,12 +565,12 @@ def userdisplaycars_dtl(request):
 
     if search_query:
         cars = cars.filter(
-            Q(manufacturer__company_name__icontains=search_query) |
-            Q(model_name__model_name__icontains=search_query)
-        )
+            Q(model_name__icontains=search_query) |
+            Q(car_type__icontains=search_query)
+        ).distinct()
 
     if brand:
-        cars = cars.filter(manufacturer_id=brand)
+        cars = cars.filter(manufacturer=brand)  # Changed from manufacturer_id to manufacturer
 
     if price_range:
         if price_range == '5000000+':
@@ -579,7 +580,7 @@ def userdisplaycars_dtl(request):
             cars = cars.filter(price__gte=min_price, price__lte=max_price)
 
     if year:
-        cars = cars.filter(year__gte=int(year))
+        cars = cars.filter(year=year)
 
     # Check if there are any cars after filtering
     no_cars = cars.count() == 0
@@ -2685,18 +2686,18 @@ def certified_cars(request):
 
     # Apply filters
     search_query = request.GET.get('search')
-    brand = request.GET.get('brand')
+    brand = request.GET.get('manufacturer')
     price_range = request.GET.get('price_range')
     year = request.GET.get('year')
 
     if search_query:
         cars = cars.filter(
-            Q(manufacturer__company_name__icontains=search_query) |
-            Q(model_name__model_name__icontains=search_query)
-        )
+            Q(model_name__icontains=search_query) |
+            Q(car_type__icontains=search_query)
+        ).distinct()
 
     if brand:
-        cars = cars.filter(manufacturer_id=brand)
+        cars = cars.filter(manufacturer=brand)  # Changed from manufacturer_id to manufacturer
 
     if price_range:
         if price_range == '5000000+':
@@ -2706,7 +2707,7 @@ def certified_cars(request):
             cars = cars.filter(price__gte=min_price, price__lte=max_price)
 
     if year:
-        cars = cars.filter(year__gte=int(year))
+        cars = cars.filter(year=year)
 
     # Check if there are any cars after filtering
     no_cars = cars.count() == 0

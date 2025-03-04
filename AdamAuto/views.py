@@ -1,19 +1,21 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from .models import CarListing  # Make sure you have this model
+from .models import CarListing, Subscription  # Add Subscription import
 from django.core.paginator import Paginator
 from .models import CertifiedCar, CertifiedCarImage, Brand
 from django.db.models import Q
 from django.core.paginator import Paginator
 from .models import CertifiedCar, CertifiedCarImage, Brand, Manufacturer, CarModel
 from django.core.exceptions import PageNotAnInteger, EmptyPage
+from django.utils import timezone
 
 @login_required
 def listedcar_sub(request):
     # Get all car listings for the current user
     user_listings = CarListing.objects.filter(user=request.user).order_by('-created_at')
-    
     context = {
+        'user_listings': user_listings
+    }
     return render(request, 'listedcar_sub.html', context)
 
 def certified_cars(request):
@@ -23,7 +25,22 @@ def certified_cars(request):
     price_range = request.GET.get('price_range')
     year = request.GET.get('year')
 
-    # Base queryset for approved cars only
+    # Check subscription status if user is logged in
+    subscription_expired = False
+    subscription = None
+    if request.user.is_authenticated:
+        try:
+            subscription = Subscription.objects.filter(
+                user=request.user,
+                status='completed'
+            ).latest('created_at')
+            
+            if subscription:
+                subscription_expired = not subscription.is_active()
+        except Subscription.DoesNotExist:
+            subscription = None
+
+    # Base queryset for available cars only
     cars = CertifiedCar.objects.filter(car_status='Available').select_related('manufacturer', 'model_name')
 
     # Apply filters
@@ -49,31 +66,25 @@ def certified_cars(request):
     # Get all brands for the filter dropdown
     brands = Brand.objects.all()
 
-    # Check if there are no cars after filtering
-    no_cars = not cars.exists()
-
     # Pagination
     paginator = Paginator(cars, 6)  # Show 6 cars per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page = request.GET.get('page')
+    try:
+        page_obj = paginator.get_page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
 
-    # Get liked cars for the current user and subscription status
-    liked_cars = []
-    subscription = None
-    
-    if request.user.is_authenticated:
-        liked_cars = request.user.liked_cars.values_list('id', flat=True)
-        subscription = request.user.subscriptions.filter(
-            status='completed',
-            subscription_type__in=['standard', 'premium']
-        ).order_by('-created_at').first()
+    # Check if there are no cars after filtering
+    no_cars = not page_obj.object_list.exists()
 
     context = {
         'page_obj': page_obj,
         'brands': brands,
         'no_cars': no_cars,
-        'liked_cars': liked_cars,
         'subscription': subscription,
+        'subscription_expired': subscription_expired
     }
 
     return render(request, 'certified_cars.html', context)

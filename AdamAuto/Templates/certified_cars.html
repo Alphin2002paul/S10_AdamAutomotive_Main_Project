@@ -136,7 +136,6 @@
         </div>
     </nav>
 
-    {% if subscription_expired %}
     <!-- Subscription Expired Modal -->
     <div class="modal fade" id="subscriptionExpiredModal" tabindex="-1" role="dialog" aria-labelledby="subscriptionExpiredModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -164,17 +163,19 @@
     </div>
 
     <script>
-    $(document).ready(function() {
-        $('#subscriptionExpiredModal').modal('show');
-        
-        // Also show modal when clicking the expired subscription button
-        $('[data-target="#subscriptionExpiredModal"]').click(function(e) {
-            e.preventDefault();
-            $('#subscriptionExpiredModal').modal('show');
+        $(document).ready(function() {
+            // Show modal if subscription is expired and action is sell
+            {% if subscription_expired and request.GET.action == 'sell' %}
+                $('#subscriptionExpiredModal').modal('show');
+            {% endif %}
+
+            // Also show modal when clicking the expired subscription button
+            $('[data-target="#subscriptionExpiredModal"]').click(function(e) {
+                e.preventDefault();
+                $('#subscriptionExpiredModal').modal('show');
+            });
         });
-    });
     </script>
-    {% endif %}
 
     <div class="hero-wrap ftco-degree-bg" style="background-image: url('{% static 'images/car21.jpg' %}');" data-stellar-background-ratio="0.5">
         <div class="overlay"></div>
@@ -185,8 +186,8 @@
                         <h1 class="mb-4">Buy Your Dream Car Through Adam Automotive</h1>
                         <p style="font-size: 18px;">Buying A Car is Not Just Buying a Machine It's an Emotion For Every Auto Enthusiast</p>
                         <div class="mt-4">
-                            {% if subscription and subscription.subscription_type == 'premium' or subscription and subscription.subscription_type == 'standard' %}
-                                {% if subscription.is_expired %}
+                            {% if user.is_authenticated %}
+                                {% if subscription_expired %}
                                     <a href="#" class="btn btn-primary py-3 px-4" data-toggle="modal" data-target="#subscriptionExpiredModal">
                                         <i class="fas fa-car mr-2"></i>Sell Your Car Through Adam Automotive
                                     </a>
@@ -226,11 +227,11 @@
                   <div class="col-md-3 mb-3">
                       <select class="form-control" name="price_range">
                           <option value="">Select Price Range</option>
-                          <option value="1000000-2000000">1000000-2000000</option>
-                          <option value="2000000-3000000">2000000-3000000</option>
-                          <option value="3000000-4000000">3000000-4000000</option>
-                          <option value="4000000-5000000">4000000-5000000</option>
-                          <option value="5000000+">Above 5000000</option>
+                          <option value="1000-1500">1000-1500</option>
+                          <option value="1600-2500">1600-2500</option>
+                          <option value="2600-3500">2600-3500</option>
+                          <option value="3600-5000">3600-5000</option>
+                          <option value="5000+">Above 5000</option>
                       </select>
                   </div>
                   <div class="col-md-3 mb-3">

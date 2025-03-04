@@ -605,15 +605,13 @@
                           {{ listing.car_status }}
                         </span>
                         <div>
-                          <a href="#" class="btn-edit {% if listing.car_status == 'Approved' %}disabled{% endif %}" 
-                             data-id="{{ listing.id }}"
-                             {% if listing.car_status == 'Approved' %}disabled="disabled"{% endif %}>
+                          <a href="#" class="btn-edit" 
+                             data-id="{{ listing.id }}">
                             <i class="fas fa-edit"></i> Edit
                           </a>
-                          <a href="#" class="btn-cancel {% if listing.car_status == 'Approved' %}disabled{% endif %}" 
+                          <a href="#" class="btn-cancel" 
                              data-toggle="modal" data-target="#confirmModal" 
-                             data-id="{{ listing.id }}"
-                             {% if listing.car_status == 'Approved' %}disabled="disabled"{% endif %}>
+                             data-id="{{ listing.id }}">
                             <i class="fas fa-times"></i> Cancel
                           </a>
                         </div>
