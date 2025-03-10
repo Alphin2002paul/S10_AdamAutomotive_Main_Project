@@ -285,7 +285,7 @@
           <li>
             <a href="{% url 'service_request_view' %}"><i class="fas fa-tools"></i> Service Request</a>
           </li>
-          <li class="active">
+          <li>
             <a href="{% url 'soldcarinfo' %}"><i class="fas fa-car-side"></i> Sold Cars</a>
           </li>
           <li>
@@ -363,14 +363,16 @@
                           {% endif %}
                         </div>
                         <div class="action-buttons mt-3">
-                          <button class="btn btn-success" onclick="showUserDetails({{ car.id }}); console.log('Details button clicked');">Details</button>                                                 
+                          <button class="btn btn-success" onclick="showUserDetails({{ car.id }}); console.log('Details button clicked');">Details</button>                          
+                          <button class="btn btn-dark" onclick="approveCar({{ car.id }})">Approve</button>
+                          <button class="btn btn-danger" onclick="cancelCar({{ car.id }})">Cancel</button>                        
                         </div>
                       </div>
                       
                       <!-- Right side: Car Details -->
                       <div class="col-md-6">
                         <div id="carDetails">
-                            <h2><span style="color: #ffffff;">{{ car.manufacturer }}</span> <span style="color: #d39e00;">{{ car.model }}</span></h2><hr>
+                            <h2><span style="color: #ffffff;">{{ car.manufacturer }}</span> <span style="color: #d39e00;">{{ car.model_name }}</span></h2><hr>
                             <div class="row">
                             <div class="col-md-6">
                               <p><strong>Year:</strong> {{ car.year }}</p>
@@ -383,7 +385,7 @@
                               <p><strong>Price:</strong> ₹{{ car.price }}</p>
                               <p><strong>Transmission:</strong> {{ car.transmission }}</p>
                               <p><strong>Color:</strong> {{ car.color }}</p>
-                              <p><strong>Car Status:</strong> {{ car.status }}</p>
+                              <p><strong>Car Status:</strong> {{ car.car_status }}</p>
                               <p><strong>Engine CC:</strong> {{ car.car_cc }}</p>
                             </div>
                           </div>
@@ -517,33 +519,17 @@ document.addEventListener('DOMContentLoaded', function () {
 // Define showUserDetails in the global scope
 window.showUserDetails = function(carId) {
     console.log('showUserDetails called with carId:', carId);
-    fetch(`/get_user_details/${carId}/`)
-        .then(response => {
-            console.log('Response received:', response);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Data received:', data);
-            if (data.success) {
-                Swal.fire({
-                    title: 'User Details',
-                    html: `
-                        <p><strong>Name:</strong> ${data.user.name}</p>
-                        <p><strong>Username:</strong> ${data.user.username}</p>
-                        <p><strong>Email:</strong> ${data.user.email}</p>
-                        <p><strong>Phone:</strong> ${data.user.phone_number}</p>
-                    `,
-                    icon: 'info',
-                    confirmButtonText: 'Close'
-                });
-            } else {
-                Swal.fire('Error', 'Failed to fetch user details', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire('Error', 'An error occurred while fetching user details', 'error');
-        });
+    Swal.fire({
+        title: 'User Details',
+        html: `
+            <p><strong>Name:</strong> {{ user_details.name }}</p>
+            <p><strong>Username:</strong> {{ user_details.username }}</p>
+            <p><strong>Email:</strong> {{ user_details.email }}</p>
+            <p><strong>Phone:</strong> {{ user_details.phone_number }}</p>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Close'
+    });
 };
 
 window.cancelCar = function(carId) {
@@ -566,7 +552,7 @@ window.cancelCar = function(carId) {
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            fetch(`/cancel_car_listing/${carId}/`, {
+            fetch(`/cancel_certified_car/${carId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -582,10 +568,10 @@ window.cancelCar = function(carId) {
                         text: 'The car listing has been cancelled successfully.',
                         icon: 'success'
                     }).then(() => {
-                        window.location.href = '{% url "salereq_dsply" %}';
+                        window.location.href = '{% url "certified_admin_req" %}';
                     });
                 } else {
-                    Swal.fire('Error', 'Failed to cancel the car listing.', 'error');
+                    Swal.fire('Error', data.error || 'Failed to cancel the car listing.', 'error');
                 }
             })
             .catch(error => {
@@ -599,34 +585,24 @@ window.cancelCar = function(carId) {
 window.approveCar = function(carId) {
     Swal.fire({
         title: 'Approve Car Listing',
-        html: `
-            <textarea id="remarks" class="swal2-textarea" placeholder="Enter remarks here..." rows="4"></textarea>
-        `,
+        input: 'textarea',
+        inputLabel: 'Remarks',
+        inputPlaceholder: 'Enter your remarks here...',
+        inputAttributes: {
+            'aria-label': 'Remarks for approval'
+        },
         showCancelButton: true,
         confirmButtonText: 'Submit',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#dc3545',
-        allowOutsideClick: false,
-        didOpen: () => {
-            const confirmButton = Swal.getConfirmButton();
-            confirmButton.disabled = true;
-            
-            const remarksTextarea = Swal.getPopup().querySelector('#remarks');
-            remarksTextarea.addEventListener('input', () => {
-                confirmButton.disabled = remarksTextarea.value.trim().length === 0;
-            });
-        },
-        preConfirm: () => {
-            const remarks = Swal.getPopup().querySelector('#remarks').value;
+        cancelButtonText: 'Close',
+        preConfirm: (remarks) => {
             if (!remarks) {
-                Swal.showValidationMessage('Please enter remarks');
+                Swal.showValidationMessage('Please enter remarks for approval')
             }
-            return remarks;
+            return remarks
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            fetch(`/approve_car_listing/${carId}/`, {
+            fetch(`/approve_certified_car/${carId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -634,28 +610,23 @@ window.approveCar = function(carId) {
                 },
                 body: JSON.stringify({ remarks: result.value })
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     Swal.fire({
                         title: 'Approved',
-                        text: 'The car listing has been approved successfully. An email has been sent to the user with the approval details.',
+                        text: 'The car listing has been approved successfully.',
                         icon: 'success'
                     }).then(() => {
-                        window.location.href = '{% url "salereq_dsply" %}';
+                        window.location.href = '{% url "certified_admin_req" %}';
                     });
                 } else {
-                    Swal.fire('Error', `Failed to approve the car listing: ${data.error || 'Unknown error'}`, 'error');
+                    Swal.fire('Error', data.error || 'Failed to approve the car listing.', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                Swal.fire('Error', `An error occurred while approving the car listing: ${error.message}`, 'error');
+                Swal.fire('Error', 'An error occurred while approving the car listing.', 'error');
             });
         }
     });

@@ -119,6 +119,14 @@ urlpatterns = [
     path('get_car_details/<int:car_id>/', views.get_car_details, name='get_car_details'),
     path('delete_car_image/<int:image_id>/', views.delete_car_image, name='delete_car_image'),
     path('edit_car/<int:car_id>/', views.edit_car, name='edit_car'),
+    path('certified_admin_req/', views.certified_admin_req, name='certified_admin_req'),
+    path('certified-car-admin-details/<int:car_id>/', views.certified_car_admin_details, name='certified_car_admin_details'),
+    path('salemoredetails_certified/<int:car_id>/', views.salemoredetails_certified, name='salemoredetails_certified'),
+    path('approve_certified_car/<int:car_id>/', views.approve_certified_car, name='approve_certified_car'),
+    path('cancel_certified_car/<int:car_id>/', views.cancel_certified_car, name='cancel_certified_car'),
+
+
+    
     
 ]
 

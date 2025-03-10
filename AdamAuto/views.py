@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import CarListing, Subscription  # Add Subscription import
 from django.core.paginator import Paginator
 from .models import CertifiedCar, CertifiedCarImage, Brand
@@ -8,6 +8,10 @@ from django.core.paginator import Paginator
 from .models import CertifiedCar, CertifiedCarImage, Brand, Manufacturer, CarModel
 from django.core.exceptions import PageNotAnInteger, EmptyPage
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+import json
+from django.contrib import messages
 
 @login_required
 def listedcar_sub(request):
@@ -242,3 +246,85 @@ def approved_certified_cars(request):
     }
     
     return render(request, 'certified_cars.html', context)
+
+@login_required
+@require_POST
+def approve_car_listing(request, car_id):
+    try:
+        data = json.loads(request.body)
+        remarks = data.get('remarks')
+        
+        car = CertifiedCar.objects.get(id=car_id)
+        car.car_status = 'Approved'
+        car.admin_remarks = remarks
+        car.approval_date = timezone.now()
+        car.save()
+        
+        # Here you can add email notification logic if needed
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Car listing approved successfully'
+        })
+    except CertifiedCar.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Car listing not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@login_required
+@require_POST
+def cancel_car_listing(request, car_id):
+    try:
+        data = json.loads(request.body)
+        reason = data.get('reason')
+        
+        car = CertifiedCar.objects.get(id=car_id)
+        car.car_status = 'Denied'
+        car.admin_remarks = reason
+        car.denial_date = timezone.now()
+        car.save()
+        
+        # Here you can add email notification logic if needed
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Car listing cancelled successfully'
+        })
+    except CertifiedCar.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Car listing not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@login_required
+def certified_car_admin_details(request, car_id):
+    try:
+        car = CertifiedCar.objects.get(id=car_id)
+        images = CertifiedCarImage.objects.filter(certified_car=car)
+        user = car.user  # Get the user who submitted the car
+
+        context = {
+            'car': car,
+            'images': images,
+            'user_details': {
+                'name': f"{user.first_name} {user.last_name}",
+                'username': user.username,
+                'email': user.email,
+                'phone_number': user.Phone_number,
+            }
+        }
+        return render(request, 'salemoredetails_certified.html', context)
+    except CertifiedCar.DoesNotExist:
+        messages.error(request, 'Car not found.')
+        return redirect('certified_admin_req')

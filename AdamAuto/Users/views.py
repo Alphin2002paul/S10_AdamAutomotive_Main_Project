@@ -3554,3 +3554,169 @@ def edit_car(request, car_id):
             'message': str(e)
         }, status=500)
 
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from .models import CertifiedCar, CertifiedCarImage
+
+def certified_admin_req(request):
+    # Filter cars with 'pending' status
+    pending_cars = CertifiedCar.objects.filter(car_status='Pending').order_by('-created_at')
+    
+    # Add images to each car
+    for car in pending_cars:
+        car.image_list = CertifiedCarImage.objects.filter(certified_car=car.id)
+    
+    # Pagination
+    paginator = Paginator(pending_cars, 3)  # Show 9 cars per page
+    page_number = request.GET.get('page')
+    sell_cars = paginator.get_page(page_number)
+    
+    context = {
+        'sell_cars': sell_cars,
+    }
+    return render(request, 'certified_admin_req.html', context)
+
+from django.shortcuts import render, get_object_or_404
+from .models import CertifiedCar, CertifiedCarImage
+
+def salemoredetails_certified(request, car_id):
+    print(f"Accessing car details for car_id: {car_id}")  # Debug line
+    car = get_object_or_404(CertifiedCar, id=car_id)
+    print(f"Found car: {car.manufacturer} {car.model_name}")  # Debug line
+    images = CertifiedCarImage.objects.filter(certified_car=car)
+    print(f"Number of images found: {images.count()}")  # Debug line
+    
+    # Create a dictionary of car details, only including fields that exist
+    car_details = {
+        'Manufacturer': car.manufacturer,
+        'Model': car.model_name,
+        'Year': car.year,
+        'Price': car.price,
+        'Fuel Type': car.fuel_type,
+        'Transmission': car.transmission,
+        'Color': car.color,
+        'Registration Number': car.reg_number,
+        'Number of Owners': car.owner_status,
+        'Insurance Valid Until': car.insurance_validity,
+        'Description': car.condition,
+        'Status': car.car_status,
+        'Created At': car.created_at,
+    }
+
+    # Only add the 'User' field if it exists and is not None
+    if hasattr(car, 'user') and car.user:
+        car_details['User'] = car.user.username
+
+    context = {
+        'car': car,
+        'images': images,
+        'car_details': car_details,
+    }
+    print(f"Context prepared: {context}")  # Debug line
+    return render(request, 'salemoredetails_certified.html', context)
+
+@login_required
+def certified_car_admin_details(request, car_id):
+    try:
+        car = CertifiedCar.objects.get(id=car_id)
+        images = CertifiedCarImage.objects.filter(certified_car=car)
+        user = car.user  # Get the user who submitted the car
+
+        context = {
+            'car': car,
+            'images': images,
+            'user_details': {
+                'name': f"{user.first_name} {user.last_name}",
+                'username': user.username,
+                'email': user.email,
+                'phone_number': user.Phone_number,
+            }
+        }
+        return render(request, 'salemoredetails_certified.html', context)
+    except CertifiedCar.DoesNotExist:
+        messages.error(request, 'Car not found.')
+        return redirect('certified_admin_req')
+
+@require_POST
+def cancel_certified_car(request, car_id):
+    try:
+        car = CertifiedCar.objects.get(id=car_id)
+        data = json.loads(request.body)
+        reason = data.get('reason')
+        
+        if not reason:
+            return JsonResponse({'success': False, 'error': 'Reason is required'})
+        
+        # Update car status and save cancellation reason
+        car.car_status = 'Cancelled'
+        car.cancellation_reason = reason
+        car.save()
+        
+        # Send email to user
+        subject = 'Your Certified Car Listing Has Been Cancelled'
+        message = f'''Dear {car.user.username},
+
+Your certified car listing for {car.manufacturer} {car.model_name} has been cancelled.
+
+Reason: {reason}
+
+If you have any questions, please contact our support team.
+
+Best regards,
+Adam Automotive Team'''
+        
+        send_mail(
+            subject,
+            message,
+            'adamautomotive2024@gmail.com',
+            [car.user.email],
+            fail_silently=False,
+        )
+        
+        return JsonResponse({'success': True})
+    except CertifiedCar.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Car not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@require_POST
+def approve_certified_car(request, car_id):
+    try:
+        car = CertifiedCar.objects.get(id=car_id)
+        data = json.loads(request.body)
+        remarks = data.get('remarks')
+        
+        if not remarks:
+            return JsonResponse({'success': False, 'error': 'Remarks are required'})
+        
+        # Update car status and save approval remarks
+        car.car_status = 'Approved'
+        car.approval_remarks = remarks
+        car.save()
+        
+        # Send email to user
+        subject = 'Your Certified Car Listing Has Been Approved'
+        message = f'''Dear {car.user.username},
+
+Congratulations! Your certified car listing for {car.manufacturer} {car.model_name} has been approved.
+
+Remarks: {remarks}
+
+Your car is now listed in our certified cars section.
+
+Best regards,
+Adam Automotive Team'''
+        
+        send_mail(
+            subject,
+            message,
+            'adamautomotive2024@gmail.com',
+            [car.user.email],
+            fail_silently=False,
+        )
+        
+        return JsonResponse({'success': True})
+    except CertifiedCar.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Car not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
