@@ -603,8 +603,11 @@ def userdisplaycars_dtl(request):
 from django.core.paginator import Paginator
 
 def edit_listing(request):
-    cars = UserCarDetails.objects.all().order_by('-id')
-    paginator = Paginator(cars, 3)  # Show 6 cars per page
+    # Filter cars that are either Available or Pending
+    cars = UserCarDetails.objects.filter(
+        Q(car_status='Available') | Q(car_status='Pending')
+    ).order_by('-id')  # Show newest cars first
+    paginator = Paginator(cars, 2)  # Show 2 cars per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'edit_listing.html', {'cars': page_obj})
@@ -1197,7 +1200,7 @@ from .models import SellCar, CarImage
 
 def salereq_dsply(request):
     # Filter cars with 'pending' status
-    pending_cars = SellCar.objects.filter(status='pending').order_by('-created_at')
+    pending_cars = SellCar.objects.filter(user__user_type='customer', status='pending').order_by('-created_at')
     
     # Add images to each car
     for car in pending_cars:
