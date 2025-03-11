@@ -295,9 +295,9 @@
                                 <span class="mb-0" style="color:#d39e00">Status: <span style="color:red">{{ car.car_status }}</span></span>
                             </div>
                             <p class="d-flex mb-0 d-block">
-                              <a style="width:47%" href="{% url 'car_detail' car.id %}" class="btn custom-btn py-2 ml-1">Chat Now</a>
+                              <a style="width:47%" href="{% url 'car_details_certified' car_id=car.id %}" class="btn custom-btn py-2 ml-1">Chat Now</a>
 
-                                <a style="width:47%" href="{% url 'car_detail' car.id %}" class="btn custom-btn py-2 ml-1">Details</a>
+                                <a style="width:47%" href="{% url 'car_details_certified' car_id=car.id %}" class="btn custom-btn py-2 ml-1">Details</a>
                             </p>
                         </div>
                     </div>

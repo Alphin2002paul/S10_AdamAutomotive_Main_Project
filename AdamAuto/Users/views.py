@@ -3723,3 +3723,15 @@ Adam Automotive Team'''
         return JsonResponse({'success': False, 'error': 'Car not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+from django.shortcuts import render, get_object_or_404
+from .models import CertifiedCar, CertifiedCarImage
+
+def car_details_certified(request, car_id):
+    car = get_object_or_404(CertifiedCar, id=car_id)
+    car_images = CertifiedCarImage.objects.filter(certified_car=car)
+    context = {
+        'car': car,
+        'car_images': car_images,
+    }
+    return render(request, 'car_details_certified.html', context)

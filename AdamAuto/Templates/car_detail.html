@@ -108,7 +108,7 @@
                           <a class="dropdown-item" href="{% url 'liked_list' %}">Liked List</a>                         
                           <a class="dropdown-item" href="{% url 'sellcar_dtl' %}">Sell Your Car</a>
                           <a class="dropdown-item" href="{% url 'bookservice_dtl' %}">Book A Service</a>
-                          <a class="dropdown-item" href="{% url 'request_dtl' %}">Requs</a>
+                          <a class="dropdown-item" href="{% url 'request_dtl' %}">Requests</a>
                           <a class="dropdown-item" href="{% url 'perfect_car' %}">Perfect Car</a>
                           <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                           <!-- Add more options as needed, such as profile settings -->
@@ -167,7 +167,7 @@
             </div>
             <div class="col-md-6">
               <h2>{{ car.manufacturer.company_name }} {{ car.model_name.model_name }}</h2>
-              <p><strong>Year:</strong> {{ car.year }}</p>
+              <p><strong>Years:</strong> {{ car.year }}</p>
               <p><strong>Price:</strong> ₹{{ car.price }}</p>
               <p><strong>Color:</strong> {{ car.color.color_name }}</p>
               <p><strong>Fuel Type:</strong> {{ car.fuel_type }}</p>
