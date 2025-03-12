@@ -2970,14 +2970,14 @@ def send_subscription_email(request):
             start_date = datetime.now()
             if subscription_type == 'standard':
                 end_date = start_date + timedelta(days=30)
-                max_photos = 5
+                max_photos = "Unlimited"
                 listing_duration = "30 days"
-                ad_limit = "Single advertisement"
+                ad_limit = "No Advertisement Limit"
             else:  # premium
                 end_date = start_date + timedelta(days=90)
                 max_photos = "Unlimited"
                 listing_duration = "90 days"
-                ad_limit = "Multiple advertisements"
+                ad_limit = "No Advertisements Limit"
 
             # Prepare email context
             context = {

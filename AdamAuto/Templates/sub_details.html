@@ -653,11 +653,11 @@
                     <li><i class="fas fa-check-circle"></i> Basic Profile Management</li>
                   {% elif subscription.subscription_type == 'premium' %}
                     <li><i class="fas fa-check-circle"></i>Premium Access to Certified Sales</li>
-                    <li><i class="fas fa-check-circle"></i>Can List Multiple Advertisment</li>
-                    <li><i class="fas fa-check-circle"></i>No Listing Duration</li>
+                    <li><i class="fas fa-check-circle"></i>List Multiple Advertisment</li>
+                    <li><i class="fas fa-check-circle"></i>Listing Duration</li>
                   {% elif subscription.subscription_type == 'standard' %}
                     <li><i class="fas fa-check-circle"></i>Standard Access to Certified Sales</li>
-                    <li><i class="fas fa-check-circle"></i>Single Advertisment Only</li>
+                    <li><i class="fas fa-check-circle"></i>List Multiple Advertisment</li>
                     <li><i class="fas fa-check-circle"></i>30 days Listing Duration</li>
                   {% endif %}
                 </ul>
@@ -869,7 +869,7 @@
                                     </div>
                                     <ul class="features">
                                         <li><i class="fas fa-check"></i> Standard Access to Certified Sales</li>
-                                        <li><i class="fas fa-check"></i> Single Advertisement Only</li>
+                                        <li><i class="fas fa-check"></i> Can List Multiple Advertisement</li>
                                         <li><i class="fas fa-check"></i> 30 days Listing Duration</li>
                                     </ul>
                                     <button onclick="initializePayment('standard', 199)" class="choose-plan">Choose Plan</button>
@@ -885,15 +885,15 @@
                                 <div class="plan-content">
                                     <div class="price">
                                         <span class="currency">₹</span>
-                                        <span class="amount">399</span>
-                                        <span class="period">/month</span>
+                                        <span class="amount">599</span>
+                                        <span class="period">/Year</span>
                                     </div>
                                     <ul class="features">
                                         <li><i class="fas fa-check"></i> Premium Access to Certified Sales</li>
                                         <li><i class="fas fa-check"></i> Can List Multiple Advertisement</li>
                                         <li><i class="fas fa-check"></i> No Listing Duration</li>
                                     </ul>
-                                    <button onclick="initializePayment('premium', 399)" class="choose-plan premium">Choose Plan</button>
+                                    <button onclick="initializePayment('premium', 599)" class="choose-plan premium">Choose Plan</button>
                                 </div>
                             </div>
                         </div>
