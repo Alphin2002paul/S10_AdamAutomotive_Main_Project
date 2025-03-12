@@ -3756,3 +3756,131 @@ def get_chat_history(request):
             'error': str(e)
         })
 
+from django.http import JsonResponse
+from .models import ChatMessage, CertifiedCar
+from django.shortcuts import get_object_or_404
+
+@login_required
+def get_chat_history(request):
+    # Get all chats where the user is either sender or receiver
+    chats = ChatMessage.objects.filter(
+        Q(sender=request.user) | Q(receiver=request.user)
+    ).select_related('car', 'sender', 'receiver').order_by('-timestamp')
+
+    # Group messages by car
+    chat_history = {}
+    for chat in chats:
+        if chat.car.id not in chat_history:
+            chat_history[chat.car.id] = {
+                'car_details': f"{chat.car.manufacturer} {chat.car.model_name} ({chat.car.year})",
+                'date': chat.car.created_at.strftime('%Y-%m-%d'),
+                'messages': []
+            }
+        
+        chat_history[chat.car.id]['messages'].append({
+            'content': chat.message,
+            'sender': chat.sender.username,
+            'timestamp': chat.timestamp.strftime('%I:%M %p'),
+            'is_read': chat.is_read
+        })
+
+    return JsonResponse({
+        'success': True,
+        'chats': list(chat_history.values())
+    })
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db.models import Q
+from .models import ChatMessage, CertifiedCar
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+
+@login_required
+def get_chat_messages(request, car_id):
+    try:
+        car = CertifiedCar.objects.get(id=car_id)
+        messages = ChatMessage.objects.filter(
+            Q(sender=request.user) | Q(receiver=request.user),
+            car=car
+        ).order_by('timestamp')
+
+        messages_list = []
+        for msg in messages:
+            messages_list.append({
+                'id': msg.id,
+                'content': str(msg.message),
+                'sender': msg.sender.username,
+                'receiver': msg.receiver.username,
+                'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'is_sender': msg.sender == request.user
+            })
+
+        return JsonResponse({
+            'success': True,
+            'messages': messages_list,
+            'car_details': f"{car.manufacturer} {car.model_name}"
+        })
+    except CertifiedCar.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Car not found'
+        }, status=404)
+    except Exception as e:
+        print(f"Error in get_chat_messages: {str(e)}")  # Debug log
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@login_required
+@csrf_exempt
+def send_chat_message(request, car_id):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+    
+    try:
+        car = CertifiedCar.objects.get(id=car_id)
+        message_content = request.POST.get('message')
+        
+        if not message_content:
+            return JsonResponse({'success': False, 'error': 'Message content required'}, status=400)
+        
+        # Determine the receiver (car owner if sender is not owner, last sender if owner)
+        if request.user == car.user:
+            # If sender is car owner, find the last person who sent a message
+            last_message = ChatMessage.objects.filter(
+                car=car
+            ).exclude(sender=request.user).order_by('-timestamp').first()
+            receiver = last_message.sender if last_message else None
+        else:
+            # If sender is not car owner, receiver is the car owner
+            receiver = car.user
+        
+        if not receiver:
+            return JsonResponse({'success': False, 'error': 'Could not determine message receiver'}, status=400)
+        
+        # Create and save the message
+        message = ChatMessage.objects.create(
+            car=car,
+            sender=request.user,
+            receiver=receiver,
+            message=message_content,
+            timestamp=timezone.now()
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'content': message.message,
+                'sender': message.sender.username,
+                'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'is_read': message.is_read
+            }
+        })
+        
+    except CertifiedCar.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Car not found'}, status=404)
+    except Exception as e:
+        print(f"Error in send_chat_message: {str(e)}")  # Debug log
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

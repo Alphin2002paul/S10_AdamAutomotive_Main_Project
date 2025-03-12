@@ -349,3 +349,17 @@ class CertifiedCarImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.certified_car} - {self.created_at}"
+    
+class ChatMessage(models.Model):
+    car = models.ForeignKey('CertifiedCar', on_delete=models.CASCADE, related_name='chat_messages')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages')
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"Chat between {self.sender.username} and {self.receiver.username} for {self.car}"

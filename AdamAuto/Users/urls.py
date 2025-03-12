@@ -126,6 +126,8 @@ urlpatterns = [
     path('cancel_certified_car/<int:car_id>/', views.cancel_certified_car, name='cancel_certified_car'),
     path('car_details_certified/<int:car_id>/', views.car_details_certified, name='car_details_certified'),
     path('get-chat-history/', views.get_chat_history, name='get_chat_history'),
+    path('get-chat-messages/<int:car_id>/', views.get_chat_messages, name='get_chat_messages'),
+    path('send-chat-message/<int:car_id>/', views.send_chat_message, name='send_chat_message'),
 ]
 
 if settings.DEBUG:
