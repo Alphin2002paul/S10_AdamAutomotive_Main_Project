@@ -209,48 +209,59 @@
     </div>
 
     <section class="ftco-section bg-light">
-      <div class="container">
-          <h2>Filter Cars</h2>
-          <form method="GET" action="">
-              <div class="row">
-                  <div class="col-md-3 mb-3">
-                      <input type="text" class="form-control" name="search" placeholder="Search cars...">
-                  </div>
-                  <div class="col-md-3 mb-3">
-                      <select class="form-control" name="brand">
-                          <option value="">Select Brand</option>
-                          {% for brand in brands %}
-                              <option value="{{ brand.id }}">{{ brand.company_name }}</option>
-                          {% endfor %}
-                      </select>
-                  </div>
-                  <div class="col-md-3 mb-3">
-                      <select class="form-control" name="price_range">
-                          <option value="">Select Price Range</option>
-                          <option value="1000-2000">1000-2000</option>
-                          <option value="2000-3000">2000-3000</option>
-                          <option value="3000-4000">3000-4000</option>
-                          <option value="4000-5000">4000-5000</option>
-                          <option value="5000+">Above 5000</option>
-                      </select>
-                  </div>
-                  <div class="col-md-3 mb-3">
-                      <input type="number" class="form-control" name="year" placeholder="Year (2015+)" min="2015" max="9999">
-                  </div>
-              </div>
-              <div class="row">
-                  <div class="col-md-12">
-                      <button type="submit" class="btn btn-primary">Apply Filters</button>
-                  </div>
-              </div>
-          </form>
-      </div>
-  </section>
+        <div class="container">
+            <h2>Filter Cars</h2>
+            <form method="GET" action="">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <input type="text" class="form-control" name="search" placeholder="Search cars...">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <select class="form-control" name="brand">
+                            <option value="">Select Brand</option>
+                            {% for brand in brands %}
+                                <option value="{{ brand.id }}">{{ brand.company_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <select class="form-control" name="price_range">
+                            <option value="">Select Price Range</option>
+                            <option value="1000-2000">1000-2000</option>
+                            <option value="2000-3000">2000-3000</option>
+                            <option value="3000-4000">3000-4000</option>
+                            <option value="4000-5000">4000-5000</option>
+                            <option value="5000+">Above 5000</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="row">
+                            
+                            <div class="col-12">
+                                <input type="number" class="form-control" name="year" placeholder="Year (2015+)" min="2015" max="9999">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
     </div>
     <section class="ftco-section bg-light">
       <div class="container">
-        <h2>Certified Available&nbsp;<span style="color: #d39e00;">Stocks</span></h2>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Certified Available&nbsp;<span style="color: #d39e00;">Stocks</span></h2>
+            <button type="button" class="btn btn-primary" id="chatHistoryBtn" style="background: #000 !important; border-radius: 4px; width: auto; padding: 8px 16px;" data-toggle="modal" data-target="#chatHistoryModal">
+                <i class="fas fa-history"></i> Chat History
+            </button>
+        </div>
         <hr />
+        
         {% if no_cars %}
         <div class="row">
             <div class="col-md-12 text-center">
@@ -295,9 +306,8 @@
                                 <span class="mb-0" style="color:#d39e00">Status: <span style="color:red">{{ car.car_status }}</span></span>
                             </div>
                             <p class="d-flex mb-0 d-block">
-                              <a style="width:47%" href="{% url 'car_details_certified' car_id=car.id %}" class="btn custom-btn py-2 ml-1">Chat Now</a>
 
-                                <a style="width:47%" href="{% url 'car_details_certified' car_id=car.id %}" class="btn custom-btn py-2 ml-1">Details</a>
+                                <a style="width:67%" href="{% url 'car_details_certified' car_id=car.id %}" class="btn custom-btn py-2 ml-5">Details</a>
                             </p>
                         </div>
                     </div>
@@ -1696,6 +1706,78 @@
     });
     </script>
       
+    <!-- Add this modal after the subscription modal -->
+    <div class="modal fade" id="chatHistoryModal" tabindex="-1" role="dialog" aria-labelledby="chatHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: #000; color: white;">
+                    <h5 class="modal-title" id="chatHistoryModalLabel">
+                        <span style="color: #999999;">Adam</span>
+                        <span style="color: #d39e00;">Automotive</span> - Chat History
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true" style="color: white;">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="chatHistoryContent" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Chat history will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this script before the closing body tag -->
+    <script>
+    // Add this to your existing JavaScript
+    $(document).ready(function() {
+        $('#chatHistoryBtn').click(function() {
+            // Show loading state
+            $('#chatHistoryContent').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading chat history...</div>');
+            
+            // Fetch chat history from server
+            $.ajax({
+                url: '/get-chat-history/',  // You'll need to create this endpoint in your Django views
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        let historyHtml = '';
+                        response.chats.forEach(chat => {
+                            historyHtml += `
+                                <div class="chat-entry mb-3 p-3" style="border: 1px solid #eee; border-radius: 8px;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <strong>${chat.car_details}</strong>
+                                        <small class="text-muted">${chat.date}</small>
+                                    </div>
+                                    <div class="chat-messages" style="max-height: 200px; overflow-y: auto;">
+                                        ${chat.messages.map(msg => `
+                                            <div class="message ${msg.sender === 'user' ? 'text-right' : 'text-left'} mb-2">
+                                                <small class="text-muted">${msg.sender}:</small>
+                                                <div class="message-content p-2 ${msg.sender === 'user' ? 'bg-light' : 'bg-info text-white'}" style="border-radius: 8px; display: inline-block; max-width: 80%;">
+                                                    ${msg.content}
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        $('#chatHistoryContent').html(historyHtml || '<div class="text-center">No chat history found</div>');
+                    } else {
+                        $('#chatHistoryContent').html('<div class="text-center text-danger">Error loading chat history</div>');
+                    }
+                },
+                error: function() {
+                    $('#chatHistoryContent').html('<div class="text-center text-danger">Failed to load chat history</div>');
+                }
+            });
+        });
+    });
+    </script>
 </body>
 
 </html>

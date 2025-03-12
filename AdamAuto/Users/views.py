@@ -3735,3 +3735,24 @@ def car_details_certified(request, car_id):
         'car_images': car_images,
     }
     return render(request, 'car_details_certified.html', context)
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def get_chat_history(request):
+    try:
+        # Fetch chat history for the current user
+        # This is a placeholder - implement according to your data model
+        chats = []  # Replace with actual database query
+        
+        return JsonResponse({
+            'success': True,
+            'chats': chats
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
