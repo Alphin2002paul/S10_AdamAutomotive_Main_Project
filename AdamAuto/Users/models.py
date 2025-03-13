@@ -350,6 +350,7 @@ class CertifiedCarImage(models.Model):
     def __str__(self):
         return f"Image for {self.certified_car} - {self.created_at}"
     
+    
 class ChatMessage(models.Model):
     car = models.ForeignKey('CertifiedCar', on_delete=models.CASCADE, related_name='chat_messages')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')

@@ -1780,49 +1780,47 @@
       
     <!-- Add this modal after the subscription modal -->
     <div class="modal fade" id="chatHistoryModal" tabindex="-1" role="dialog" aria-labelledby="chatHistoryModalLabel" aria-hidden="true">
-        <div class="modal-dialog" style="max-width: 1000px;" role="document">
-            <div class="modal-content" style="height: 650px;">
-                <div class="modal-header" style="background: #000;">
-                    <h5 class="modal-title" id="chatHistoryModalLabel" style="color: white;">
-                        Messages
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: #000; padding: 15px 20px;">
+                    <h5 class="modal-title" id="chatHistoryModalLabel" style="color: white; font-size: 18px;">
+                        <i class="fas fa-comments mr-2"></i> Chat History
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true" style="color: white;">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body p-0">
-                    <div class="row no-gutters h-100">
+                    <div class="chat-container">
                         <!-- Left Sidebar - Contact List -->
-                        <div class="col-md-4 border-right h-100">
-                            <div class="search-container p-3 border-bottom">
+                        <div class="contacts-section">
+                            <div class="search-box">
                                 <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-white border-right-0">
-                                            <i class="fas fa-search text-muted"></i>
+                                    <input type="text" class="form-control search-input" id="searchMessages" placeholder="Search conversations...">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text search-icon">
+                                            <i class="fas fa-search"></i>
                                         </span>
                                     </div>
-                                    <input type="text" class="form-control border-left-0" id="searchMessages" placeholder="Search messages...">
                                 </div>
                             </div>
-                            <div id="chatContactsList" style="height: calc(100% - 71px); overflow-y: auto;">
-                                <!-- Contacts will be loaded here -->
-                            </div>
+                            <div id="chatContactsList"></div>
                         </div>
 
                         <!-- Right Side - Chat Area -->
-                        <div class="col-md-8 h-100 d-flex flex-column">
-                            <div id="selectedChatMessages" class="flex-grow-1" style="overflow-y: auto; padding: 20px;">
-                                <div class="initial-message text-center text-muted">
-                                    <i class="fas fa-comments fa-3x mb-3"></i>
-                                    <p>Select a conversation to start messaging</p>
+                        <div class="chat-section">
+                            <div id="selectedChatMessages">
+                                <div class="initial-message">
+                                    <i class="fas fa-comments"></i>
+                                    <p>Select a conversation to view messages</p>
                                 </div>
                             </div>
-                            <div id="messageInputContainer" class="p-3 border-top" style="display: none;">
+                            <div id="messageInputContainer">
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="newMessageInput" placeholder="Type a message...">
+                                    <input type="text" class="form-control message-input" id="newMessageInput" placeholder="Type your message...">
                                     <div class="input-group-append">
-                                        <button class="btn btn-primary" type="button" id="sendMessageBtn">
-                                            Send
+                                        <button class="btn btn-send" id="sendMessageBtn">
+                                            <i class="fas fa-paper-plane"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -1836,129 +1834,188 @@
 
     <!-- Add these styles -->
     <style>
-    .contact-item {
+    /* Modal styling */
+    .modal-lg {
+        max-width: 900px;
+    }
+
+    .modal-content {
+        height: 600px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    /* Chat container layout */
+    .chat-container {
         display: flex;
-        align-items: center;
+        height: calc(100vh - 150px);
+        max-height: 550px;
+    }
+
+    /* Contacts section styling */
+    .contacts-section {
+        width: 300px;
+        border-right: 1px solid #dee2e6;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .search-box {
         padding: 15px;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid #dee2e6;
+        background: #fff;
+    }
+
+    .search-input {
+        border-right: none;
+        border-radius: 20px 0 0 20px;
+        padding-left: 15px;
+    }
+
+    .search-icon {
+        background: white;
+        border-left: none;
+        border-radius: 0 20px 20px 0;
+        color: #666;
+    }
+
+    #chatContactsList {
+        flex: 1;
+        overflow-y: auto;
+        background: #fff;
+    }
+
+    /* Chat section styling */
+    .chat-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #f8f9fa;
+    }
+
+    #selectedChatMessages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #fff;
+    }
+
+    .initial-message {
+        text-align: center;
+        color: #666;
+        padding: 40px 20px;
+    }
+
+    .initial-message i {
+        font-size: 48px;
+        color: #dee2e6;
+        margin-bottom: 15px;
+    }
+
+    /* Message input styling */
+    #messageInputContainer {
+        padding: 15px;
+        background: #fff;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .message-input {
+        border-radius: 20px 0 0 20px !important;
+        border: 1px solid #dee2e6;
+        padding: 10px 15px;
+    }
+
+    .btn-send {
+        border-radius: 0 20px 20px 0 !important;
+        background: #000;
+        color: white;
+        padding: 0 20px;
+        border: 1px solid #000;
+    }
+
+    .btn-send:hover {
+        background: #d39e00;
+        border-color: #d39e00;
+    }
+
+    /* Contact item styling */
+    .contact-item {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
     }
 
     .contact-item:hover {
-        background-color: #f8f9fa;
+        background: #f8f9fa;
     }
 
     .contact-item.active {
-        background-color: #f0f0f0;
+        background: #f0f0f0;
+        border-left: 3px solid #d39e00;
     }
 
-    .contact-avatar {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        margin-right: 15px;
-        background-color: #e9ecef;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .contact-info {
-        flex: 1;
-    }
-
-    .contact-name {
-        font-weight: 600;
-        margin-bottom: 4px;
-        color: #212529;
-    }
-
-    .contact-preview {
-        font-size: 13px;
-        color: #6c757d;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
+    /* Message styling */
     .message {
-        display: flex;
-        flex-direction: column;
-        max-width: 75%;
         margin-bottom: 20px;
+        max-width: 80%;
     }
 
     .message.sent {
-        align-self: flex-end;
-    }
-
-    .message.received {
-        align-self: flex-start;
+        margin-left: auto;
     }
 
     .message-content {
-        padding: 10px 15px;
+        padding: 12px 15px;
         border-radius: 15px;
-        margin-bottom: 5px;
         position: relative;
     }
 
     .message.sent .message-content {
-        background-color: #000;
+        background: #000;
         color: white;
         border-top-right-radius: 4px;
     }
 
     .message.received .message-content {
-        background-color: #f0f0f0;
+        background: #f0f0f0;
         color: #000;
         border-top-left-radius: 4px;
     }
 
+    /* Custom scrollbar */
+    #selectedChatMessages::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Firefox scrollbar */
+    #selectedChatMessages {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+
+    /* Message timestamps */
     .message-time {
         font-size: 11px;
         color: #999;
-        margin-top: 2px;
+        margin-top: 5px;
     }
 
     .message.sent .message-time {
         text-align: right;
-    }
-
-    .unread-indicator {
-        width: 8px;
-        height: 8px;
-        background-color: #d39e00;
-        border-radius: 50%;
-        margin-left: 10px;
-    }
-
-    #sendMessageBtn {
-        background-color: #000;
-        border-color: #000;
-    }
-
-    #sendMessageBtn:hover {
-        background-color: #d39e00;
-        border-color: #d39e00;
-    }
-
-    .search-container {
-        background: white;
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-
-    .input-group-text {
-        border-color: #ced4da;
-    }
-
-    #newMessageInput {
-        border-radius: 20px;
-        padding-left: 15px;
-        padding-right: 15px;
     }
     </style>
 
@@ -2050,7 +2107,9 @@
 
         function loadChatMessages(carId) {
             activeCarId = carId;
-            $('#selectedChatMessages').html(`
+            const messagesContainer = $('#selectedChatMessages');
+            
+            messagesContainer.html(`
                 <div class="text-center p-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="sr-only">Loading...</span>
@@ -2058,72 +2117,39 @@
                     <div class="mt-2">Loading messages...</div>
                 </div>
             `);
+            
             $('#messageInputContainer').show();
 
             $.ajax({
                 url: `/get-chat-messages/${carId}/`,
                 method: 'GET',
                 success: function(response) {
-                    console.log("Messages response:", response); // Debug log
-                    
                     if (response.success && response.messages) {
-                        // Remove unread indicator
-                        $(`.contact-item[data-car-id="${carId}"]`).removeClass('unread')
-                            .find('.badge').remove();
-                        
                         let messagesHtml = '';
-                        if (response.messages.length === 0) {
-                            // If no messages, show initial message
-                            messagesHtml = `
-                                <div class="message received">
+                        response.messages.forEach(msg => {
+                            const messageTime = new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            
+                            messagesHtml += `
+                                <div class="message ${msg.is_sender ? 'sent' : 'received'}">
                                     <div class="message-content">
-                                        Is this car available?
+                                        ${msg.content}
                                     </div>
                                     <div class="message-time">
-                                        System • ${new Date().toLocaleTimeString([], {
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
+                                        ${msg.is_sender ? 'You' : msg.sender} • ${messageTime}
                                     </div>
                                 </div>`;
-                        } else {
-                            response.messages.forEach(msg => {
-                                const messageTime = new Date(msg.timestamp).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                });
-                                
-                                messagesHtml += `
-                                    <div class="message ${msg.is_sender ? 'sent' : 'received'}">
-                                        <div class="message-content">
-                                            ${msg.content}
-                                        </div>
-                                        <div class="message-time">
-                                            ${msg.is_sender ? 'You' : msg.sender} • ${messageTime}
-                                        </div>
-                                    </div>`;
-                            });
-                        }
+                        });
                         
-                        $('#selectedChatMessages').html(messagesHtml);
-                        $('#selectedChatMessages').scrollTop($('#selectedChatMessages')[0].scrollHeight);
-                    } else {
-                        $('#selectedChatMessages').html(`
-                            <div class="text-center p-4 text-danger">
-                                <i class="fas fa-exclamation-circle"></i><br>
-                                Could not load messages
-                            </div>
-                        `);
+                        messagesContainer.html(messagesHtml);
+                        
+                        // Scroll to bottom after loading messages
+                        setTimeout(() => {
+                            messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+                        }, 100);
                     }
-                },
-                error: function(xhr, status, error) {
-                    console.error("Error loading messages:", error); // Debug log
-                    $('#selectedChatMessages').html(`
-                        <div class="text-center p-4 text-danger">
-                            <i class="fas fa-exclamation-circle"></i><br>
-                            Could not load messages. Please try again.
-                        </div>
-                    `);
                 }
             });
         }
@@ -2192,6 +2218,567 @@
                 $(this).toggle(text.includes(searchTerm));
             });
         });
+    });
+    </script>
+
+    <style>
+    /* Update only the message input styling */
+    #messageInputContainer {
+        padding: 10px;
+        background: white;
+    }
+
+    #newMessageInput {
+        border: 1px solid #dee2e6;
+    }
+
+    #newMessageInput:focus {
+        box-shadow: none;
+        border-color: #d39e00;
+    }
+
+    #sendMessageBtn {
+        background: #000;
+        border: 1px solid #000;
+        color: white;
+    }
+
+    #sendMessageBtn:hover {
+        background: #d39e00;
+        border-color: #d39e00;
+    }
+    </style>
+
+    <style>
+    /* Update the message input styling */
+    #messageInputContainer {
+        background: white;
+    }
+
+    #newMessageInput {
+        border: 1px solid #dee2e6;
+        padding-left: 20px;
+    }
+
+    #newMessageInput:focus {
+        box-shadow: none;
+        border-color: #d39e00;
+    }
+
+    #sendMessageBtn {
+        background: #000;
+        border: 1px solid #000;
+        color: white;
+    }
+
+    #sendMessageBtn:hover {
+        background: #d39e00;
+        border-color: #d39e00;
+    }
+
+    /* Add padding to the chat messages container */
+    #selectedChatMessages {
+        padding: 20px 25px !important;
+    }
+    </style>
+
+    <style>
+    /* Message input styling */
+    .message-input-wrapper {
+        padding: 15px;
+        margin: 0 15px;
+    }
+
+    .message-input {
+        height: 40px !important;
+        border-radius: 20px 0 0 20px !important;
+        border: 1px solid #dee2e6 !important;
+        padding-left: 20px !important;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .message-input:focus {
+        box-shadow: none !important;
+        border-color: #d39e00 !important;
+    }
+
+    .btn-send {
+        height: 40px;
+        width: 80px;
+        border-radius: 0 20px 20px 0 !important;
+        background: #000 !important;
+        border: 1px solid #000 !important;
+        color: white !important;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-send:hover {
+        background: #d39e00 !important;
+        border-color: #d39e00 !important;
+    }
+
+    /* Chat messages container */
+    #selectedChatMessages {
+        padding: 20px;
+        background: #fff;
+    }
+
+    /* Message input container */
+    #messageInputContainer {
+        background: #fff;
+        border-top: 1px solid #dee2e6;
+        padding: 10px 0;
+    }
+    </style>
+
+    <style>
+    #messageInputContainer {
+        background: white;
+        padding: 15px;
+        position: sticky;
+        bottom: 0;
+    }
+
+    #newMessageInput {
+        border: 1px solid #dee2e6;
+        padding-left: 15px;
+    }
+
+    #newMessageInput:focus {
+        box-shadow: none;
+        border-color: #d39e00;
+        outline: none;
+    }
+
+    #sendMessageBtn:hover {
+        background: #d39e00 !important;
+        border-color: #d39e00 !important;
+    }
+
+    /* Remove any conflicting styles */
+    .message-input-wrapper,
+    .message-input,
+    .btn-send {
+        all: unset;
+    }
+    </style>
+
+    <!-- Add this button after the selectedChatMessages div -->
+    <button id="scrollToBottomBtn" 
+            style="position: fixed; 
+                   right: 40px; 
+                   bottom: 100px; 
+                   z-index: 1000; 
+                   display: none; 
+                   background-color: #000; 
+                   color: white; 
+                   border: none; 
+                   border-radius: 50%; 
+                   width: 40px; 
+                   height: 40px; 
+                   cursor: pointer;
+                   box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+        <i class="fas fa-arrow-down"></i>
+    </button>
+
+    <!-- Update the JavaScript for scroll button functionality -->
+    <script>
+    $(document).ready(function() {
+        const messagesContainer = $('#selectedChatMessages');
+        const scrollBtn = $('#scrollToBottomBtn');
+
+        // Show/hide scroll button based on scroll position
+        messagesContainer.on('scroll', checkScrollPosition);
+
+        function checkScrollPosition() {
+            const scrollDistance = messagesContainer[0].scrollHeight - messagesContainer.scrollTop() - messagesContainer.height();
+            if (scrollDistance > 100) {
+                scrollBtn.fadeIn();
+            } else {
+                scrollBtn.fadeOut();
+            }
+        }
+
+        // Scroll to bottom when button is clicked
+        scrollBtn.on('click', function() {
+            messagesContainer.animate({
+                scrollTop: messagesContainer[0].scrollHeight
+            }, 300);
+        });
+
+        // Check scroll position after loading messages
+        function loadChatMessages(carId) {
+            // ... existing loadChatMessages code ...
+            
+            // Add this at the end of the success callback
+            setTimeout(checkScrollPosition, 100); // Check after messages are loaded
+        }
+
+        // Show/hide button when chat history modal is opened
+        $('#chatHistoryModal').on('shown.bs.modal', function() {
+            setTimeout(checkScrollPosition, 100);
+        });
+    });
+    </script>
+
+    <!-- Add these styles -->
+    <style>
+    #scrollToBottomBtn:hover {
+        background-color: #d39e00;
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
+    }
+
+    #selectedChatMessages {
+        position: relative;
+    }
+    </style>
+
+    <!-- Update the JavaScript for scroll button functionality -->
+    <script>
+    $(document).ready(function() {
+        const messagesContainer = $('#selectedChatMessages');
+        const scrollBtn = $('#scrollToBottomBtn');
+
+        // Show/hide scroll button based on scroll position
+        messagesContainer.on('scroll', function() {
+            const scrollDistance = messagesContainer[0].scrollHeight - messagesContainer.scrollTop() - messagesContainer.height();
+            if (scrollDistance > 100) {
+                scrollBtn.fadeIn();
+            } else {
+                scrollBtn.fadeOut();
+            }
+        });
+
+        // Scroll to bottom when button is clicked
+        scrollBtn.on('click', function() {
+            messagesContainer.animate({
+                scrollTop: messagesContainer[0].scrollHeight
+            }, 300);
+        });
+
+        // Hide button initially
+        scrollBtn.hide();
+
+        // Show/hide button when chat history modal is opened
+        $('#chatHistoryModal').on('shown.bs.modal', function() {
+            const scrollDistance = messagesContainer[0].scrollHeight - messagesContainer.scrollTop() - messagesContainer.height();
+            if (scrollDistance > 100) {
+                scrollBtn.show();
+            }
+        });
+    });
+    </script>
+
+    <!-- Add these styles -->
+    <style>
+    #scrollToBottomBtn {
+        opacity: 0.8;
+    }
+
+    #scrollToBottomBtn:hover {
+        background-color: #d39e00 !important;
+        transform: translateY(-2px);
+        opacity: 1;
+    }
+
+    #selectedChatMessages {
+        position: relative !important;
+        scroll-behavior: smooth;
+    }
+    </style>
+
+    <style>
+    /* Add these styles for the custom scrollbar */
+    #selectedChatMessages::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-thumb {
+        background: #000;
+        border-radius: 4px;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-thumb:hover {
+        background: #d39e00;
+    }
+
+    /* Update the messages container to ensure scrollbar is visible */
+    #selectedChatMessages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        background: #fff;
+        position: relative;
+        scrollbar-width: thin; /* For Firefox */
+        scrollbar-color: #000 #f1f1f1; /* For Firefox */
+        margin-right: 2px; /* Prevent content shift when scrollbar appears */
+    }
+    </style>
+
+    <style>
+    /* Custom scrollbar styles for chat messages area */
+    #selectedChatMessages {
+        flex: 1;
+        overflow-y: scroll !important; /* Force scrollbar to always show */
+        padding: 15px;
+        background: #fff;
+        position: relative;
+        margin-right: 2px;
+    }
+
+    /* Webkit browsers (Chrome, Safari, Edge) */
+    #selectedChatMessages::-webkit-scrollbar {
+        width: 6px;
+        background-color: #f1f1f1;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-thumb {
+        background-color: #000;
+        border-radius: 10px;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-thumb:hover {
+        background-color: #d39e00;
+    }
+
+    /* Firefox */
+    #selectedChatMessages {
+        scrollbar-width: thin;
+        scrollbar-color: #000 #f1f1f1;
+    }
+    </style>
+
+    <!-- Add these styles -->
+    <style>
+    #selectedChatMessages {
+        height: calc(100vh - 250px) !important;
+        overflow-y: scroll !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #000 #f1f1f1;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-thumb {
+        background: #000;
+        border-radius: 10px;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-thumb:hover {
+        background: #d39e00;
+    }
+
+    .message {
+        margin-bottom: 15px;
+    }
+    </style>
+
+    <!-- Update the JavaScript -->
+    <script>
+    $(document).ready(function() {
+        const messagesContainer = $('#selectedChatMessages');
+        const scrollBtn = $('#scrollToBottomBtn');
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+        }
+
+        function checkScrollPosition() {
+            const scrollHeight = messagesContainer[0].scrollHeight;
+            const scrollTop = messagesContainer.scrollTop();
+            const clientHeight = messagesContainer[0].clientHeight;
+            
+            if (scrollHeight - scrollTop - clientHeight > 100) {
+                scrollBtn.fadeIn();
+            } else {
+                scrollBtn.fadeOut();
+            }
+        }
+
+        // Update loadChatMessages function
+        function loadChatMessages(carId) {
+            activeCarId = carId;
+            messagesContainer.html('<div class="text-center p-4"><div class="spinner-border text-primary"></div></div>');
+            $('#messageInputContainer').show();
+
+            $.ajax({
+                url: `/get-chat-messages/${carId}/`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success && response.messages) {
+                        let messagesHtml = '';
+                        response.messages.forEach(msg => {
+                            const messageTime = new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            
+                            messagesHtml += `
+                                <div class="message ${msg.is_sender ? 'sent' : 'received'}">
+                                    <div class="message-content">
+                                        ${msg.content}
+                                    </div>
+                                    <div class="message-time">
+                                        ${msg.is_sender ? 'You' : msg.sender} • ${messageTime}
+                                    </div>
+                                </div>`;
+                        });
+                        
+                        messagesContainer.html(messagesHtml);
+                        setTimeout(scrollToBottom, 100);
+                        checkScrollPosition();
+                    }
+                }
+            });
+        }
+
+        // Event listeners
+        messagesContainer.on('scroll', checkScrollPosition);
+        
+        scrollBtn.on('click', function() {
+            messagesContainer.animate({
+                scrollTop: messagesContainer[0].scrollHeight
+            }, 300);
+        });
+
+        $('#chatHistoryModal').on('shown.bs.modal', function() {
+            setTimeout(checkScrollPosition, 100);
+        });
+
+        // After sending a new message
+        function sendNewMessage() {
+            // ... existing sendNewMessage code ...
+            
+            // Add this at the end
+            setTimeout(scrollToBottom, 100);
+        }
+    });
+    </script>
+
+    <!-- Add these styles -->
+    <style>
+    /* Custom scrollbar styling */
+    #selectedChatMessages {
+        height: 400px !important;
+        overflow-y: auto;
+        margin-right: 2px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+
+    /* Webkit browsers (Chrome, Safari, Edge) */
+    #selectedChatMessages::-webkit-scrollbar {
+        width: 4px;
+        background-color: transparent;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #selectedChatMessages::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        transition: background-color 0.3s;
+    }
+
+    #selectedChatMessages:hover::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Firefox */
+    #selectedChatMessages {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+
+    /* Message container spacing */
+    .message {
+        margin-bottom: 15px;
+        padding-right: 10px;
+    }
+
+    /* Modal content height */
+    .modal-content {
+        height: 550px;
+    }
+
+    /* Ensure the chat area takes full height */
+    .row.no-gutters.h-100 {
+        height: 100% !important;
+    }
+    </style>
+
+    <!-- Update the JavaScript -->
+    <script>
+    $(document).ready(function() {
+        // ... existing code ...
+
+        function loadChatMessages(carId) {
+            activeCarId = carId;
+            const messagesContainer = $('#selectedChatMessages');
+            
+            messagesContainer.html(`
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <div class="mt-2">Loading messages...</div>
+                </div>
+            `);
+            
+            $('#messageInputContainer').show();
+
+            $.ajax({
+                url: `/get-chat-messages/${carId}/`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success && response.messages) {
+                        let messagesHtml = '';
+                        response.messages.forEach(msg => {
+                            const messageTime = new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            
+                            messagesHtml += `
+                                <div class="message ${msg.is_sender ? 'sent' : 'received'}">
+                                    <div class="message-content">
+                                        ${msg.content}
+                                    </div>
+                                    <div class="message-time">
+                                        ${msg.is_sender ? 'You' : msg.sender} • ${messageTime}
+                                    </div>
+                                </div>`;
+                        });
+                        
+                        messagesContainer.html(messagesHtml);
+                        
+                        // Scroll to bottom after loading messages
+                        setTimeout(() => {
+                            messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+                        }, 100);
+                    }
+                }
+            });
+        }
+
+        // ... rest of your existing code ...
     });
     </script>
 </body>
