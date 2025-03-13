@@ -80,6 +80,78 @@
 .ftco-section + .ftco-section {
     padding-top: 0;
 }
+
+.badge {
+    padding: 0.25em 0.6em;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-warning {
+    background-color: #d39e00;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25em 0.6em;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contact-item {
+    position: relative;
+    padding-right: 40px; /* Make room for the badge */
+    border-left: 3px solid transparent;
+}
+
+.contact-item .badge {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Add hover effect for contacts */
+.contact-item:hover {
+    background-color: #f8f9fa;
+}
+
+.contact-item.active {
+    background-color: #e9ecef;
+    border-right: 3px solid #d39e00;
+    border-left-color: #d39e00;
+    background-color: rgba(211, 158, 0, 0.05);
+}
+
+/* Improve contact preview text */
+.contact-preview {
+    font-size: 13px;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.contact-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.contact-item.unread {
+    background-color: rgba(211, 158, 0, 0.05);
+    border-left: 3px solid #d39e00;
+}
+
+.contact-item.unread .contact-name {
+    font-weight: 600;
+}
+
+.contact-item .badge {
+    margin-left: 8px;
+}
     </style>
 
     <!-- Add jQuery to head section -->
@@ -1901,7 +1973,12 @@
             $('.contact-item').removeClass('active');
             $(this).addClass('active');
             const carId = $(this).data('car-id');
-            loadChatMessages(carId);
+            if (carId) {
+                console.log("Loading messages for car:", carId); // Debug log
+                loadChatMessages(carId);
+            } else {
+                console.error("No car ID found");
+            }
         });
 
         $('#chatHistoryBtn').click(function() {
@@ -1915,74 +1992,138 @@
                 url: '/get-chat-history/',
                 method: 'GET',
                 success: function(response) {
-                    if (response.success) {
-                        let contactsHtml = '';
-                        if (response.chats.length === 0) {
-                            contactsHtml = '<div class="text-center p-3">No conversations yet</div>';
-                        } else {
-                            response.chats.forEach(chat => {
-                                const unreadCount = chat.messages.filter(msg => 
-                                    !msg.is_read && msg.sender !== '{{ user.username }}'
-                                ).length;
-                                
-                                contactsHtml += `
-                                    <div class="contact-item" data-car-id="${chat.car_id}">
-                                        <div class="contact-avatar">
-                                            <i class="fas fa-car"></i>
-                                        </div>
-                                        <div class="contact-info">
+                    console.log("Chat history response:", response);
+                    
+                    let contactsHtml = '';
+                    if (!response.chats || response.chats.length === 0) {
+                        contactsHtml = `
+                            <div class="text-center p-3">
+                                <i class="fas fa-comments text-muted mb-2" style="font-size: 24px;"></i>
+                                <p class="text-muted">No conversations yet</p>
+                            </div>`;
+                    } else {
+                        response.chats.forEach(chat => {
+                            const lastMessage = chat.messages && chat.messages.length > 0 
+                                ? chat.messages[chat.messages.length - 1].content 
+                                : 'No messages';
+                            
+                            // Only show badge if there are unread messages
+                            const unreadBadge = chat.unread_count > 0 
+                                ? `<span class="badge badge-warning rounded-circle">${chat.unread_count}</span>` 
+                                : '';
+                            
+                            contactsHtml += `
+                                <div class="contact-item ${chat.unread_count > 0 ? 'unread' : ''}" data-car-id="${chat.car_id}">
+                                    <div class="contact-avatar">
+                                        <i class="fas fa-car"></i>
+                                    </div>
+                                    <div class="contact-info">
+                                        <div class="d-flex justify-content-between align-items-center">
                                             <div class="contact-name">${chat.car_details}</div>
-                                            <div class="contact-preview">
-                                                ${chat.messages[chat.messages.length - 1].content}
-                                            </div>
+                                            ${unreadBadge}
                                         </div>
-                                        ${unreadCount > 0 ? 
-                                            `<span class="unread-badge">${unreadCount}</span>` : 
-                                            ''}
-                                    </div>`;
-                            });
-                        }
-                        $('#chatContactsList').html(contactsHtml);
-                        
-                        // Add click handlers for contacts
-                        $('.contact-item').click(function() {
-                            $('.contact-item').removeClass('active');
-                            $(this).addClass('active');
-                            const carId = $(this).data('car-id');
-                            loadChatMessages(carId);
+                                        <div class="contact-preview">${lastMessage}</div>
+                                    </div>
+                                </div>`;
                         });
                     }
+                    
+                    $('#chatContactsList').html(contactsHtml);
                 },
-                error: function() {
-                    $('#chatContactsList').html('<div class="text-center p-3 text-danger">Failed to load conversations</div>');
+                error: function(xhr, status, error) {
+                    console.error("Error loading contacts:", error);
+                    $('#chatContactsList').html(`
+                        <div class="text-center p-3 text-danger">
+                            <i class="fas fa-exclamation-circle mb-2"></i>
+                            <p>Failed to load conversations. Please try again.</p>
+                        </div>`
+                    );
                 }
             });
         }
 
+        // Update the click handler for the chat history button
+        $('#chatHistoryBtn').click(function() {
+            $('#chatHistoryModal').modal('show');
+            loadContacts(); // Load contacts when modal opens
+        });
+
         function loadChatMessages(carId) {
             activeCarId = carId;
-            $('#selectedChatMessages').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading messages...</div>');
+            $('#selectedChatMessages').html(`
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <div class="mt-2">Loading messages...</div>
+                </div>
+            `);
             $('#messageInputContainer').show();
-            
+
             $.ajax({
                 url: `/get-chat-messages/${carId}/`,
                 method: 'GET',
                 success: function(response) {
-                    let messagesHtml = '';
-                    response.messages.forEach(msg => {
-                        const isSent = msg.sender === '{{ user.username }}';
-                        messagesHtml += `
-                            <div class="message ${isSent ? 'sent' : 'received'}">
-                                <div class="message-bubble">
-                                    ${msg.content}
-                                </div>
-                                <div class="message-time">
-                                    ${msg.timestamp}
-                                </div>
-                            </div>`;
-                    });
-                    $('#selectedChatMessages').html(messagesHtml);
-                    $('#selectedChatMessages').scrollTop($('#selectedChatMessages')[0].scrollHeight);
+                    console.log("Messages response:", response); // Debug log
+                    
+                    if (response.success && response.messages) {
+                        // Remove unread indicator
+                        $(`.contact-item[data-car-id="${carId}"]`).removeClass('unread')
+                            .find('.badge').remove();
+                        
+                        let messagesHtml = '';
+                        if (response.messages.length === 0) {
+                            // If no messages, show initial message
+                            messagesHtml = `
+                                <div class="message received">
+                                    <div class="message-content">
+                                        Is this car available?
+                                    </div>
+                                    <div class="message-time">
+                                        System • ${new Date().toLocaleTimeString([], {
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </div>
+                                </div>`;
+                        } else {
+                            response.messages.forEach(msg => {
+                                const messageTime = new Date(msg.timestamp).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                                
+                                messagesHtml += `
+                                    <div class="message ${msg.is_sender ? 'sent' : 'received'}">
+                                        <div class="message-content">
+                                            ${msg.content}
+                                        </div>
+                                        <div class="message-time">
+                                            ${msg.is_sender ? 'You' : msg.sender} • ${messageTime}
+                                        </div>
+                                    </div>`;
+                            });
+                        }
+                        
+                        $('#selectedChatMessages').html(messagesHtml);
+                        $('#selectedChatMessages').scrollTop($('#selectedChatMessages')[0].scrollHeight);
+                    } else {
+                        $('#selectedChatMessages').html(`
+                            <div class="text-center p-4 text-danger">
+                                <i class="fas fa-exclamation-circle"></i><br>
+                                Could not load messages
+                            </div>
+                        `);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error loading messages:", error); // Debug log
+                    $('#selectedChatMessages').html(`
+                        <div class="text-center p-4 text-danger">
+                            <i class="fas fa-exclamation-circle"></i><br>
+                            Could not load messages. Please try again.
+                        </div>
+                    `);
                 }
             });
         }
@@ -1999,6 +2140,27 @@
             const message = $('#newMessageInput').val().trim();
             if (!message || !activeCarId) return;
 
+            $('#newMessageInput').val('');
+            
+            // Optimistically add the message to the UI
+            const currentTime = new Date().toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            $('#selectedChatMessages').append(`
+                <div class="message sent">
+                    <div class="message-content">
+                        ${message}
+                    </div>
+                    <div class="message-time">
+                        You • ${currentTime} <span class="sending">Sending...</span>
+                    </div>
+                </div>
+            `);
+            
+            $('#selectedChatMessages').scrollTop($('#selectedChatMessages')[0].scrollHeight);
+
             $.ajax({
                 url: `/send-chat-message/${activeCarId}/`,
                 method: 'POST',
@@ -2007,9 +2169,17 @@
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 },
                 success: function(response) {
-                    $('#newMessageInput').val('');
-                    loadChatMessages(activeCarId);
-                    loadContacts(); // Refresh contact list to update preview
+                    if (response.success) {
+                        $('.sending').remove();
+                        // Refresh both messages and contacts to update unread counts
+                        loadChatMessages(activeCarId);
+                        loadContacts();
+                    } else {
+                        $('.sending').text('Failed to send');
+                    }
+                },
+                error: function() {
+                    $('.sending').text('Failed to send');
                 }
             });
         }
