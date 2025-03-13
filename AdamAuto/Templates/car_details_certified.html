@@ -85,6 +85,76 @@
         color: #020202;
         outline: none !important;
     }
+    .chat-container {
+        padding: 15px;
+        background-color: #f5f5f5;
+    }
+
+    .message-row {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 5px;
+        width: 100%;
+    }
+
+    .message-content {
+        display: flex;
+        width: 100%;
+    }
+
+    .message-row.sent .message-content {
+        justify-content: flex-end;
+    }
+
+    .message-row.received .message-content {
+        justify-content: flex-start;
+    }
+
+    .message-bubble {
+        max-width: 70%;
+        padding: 10px 15px;
+        margin: 2px 0;
+        border-radius: 8px;
+    }
+
+    .sent .message-bubble {
+        background-color: #000000;
+        color: white;
+        margin-left: auto;
+    }
+
+    .received .message-bubble {
+        background-color: #e9ecef;
+        color: black;
+        margin-right: auto;
+    }
+
+    .message-info {
+        font-size: 12px;
+        color: #666;
+        margin: 0 15px;
+        padding: 2px 0;
+    }
+
+    .sent .message-info {
+        text-align: right;
+    }
+
+    .received .message-info {
+        text-align: left;
+    }
+
+    #chat-messages {
+        height: 400px;
+        overflow-y: auto;
+        background-color: #ffffff;
+        padding: 15px;
+    }
+
+    /* Hover effect for messages */
+    .message-bubble:hover {
+        filter: brightness(95%);
+    }
     </style>
   </head>
 
@@ -151,9 +221,6 @@
         <div class="container">
           <div class="d-flex justify-content-between align-items-center">
             <h2>More&nbsp;<span style="color: #d39e00;">Details</span></h2>
-            <button type="button" class="btn btn-primary" style="background: #000 !important; border-radius: 4px; width: auto; padding: 8px 16px;" data-toggle="modal" data-target="#chatHistoryModal">
-              <i class="fas fa-history"></i> Chat History
-            </button>
           </div>
           <hr/>
           <div class="container mt-5">
@@ -191,7 +258,7 @@
               </div>
               <div class="col-md-6">
                 <div id="carDetails">
-                    <h2>{{ car.manufacturer.company_name }} {{ car.model_name.model_name }}</h2>
+                    <h2>{{ car.manufacturer }} {{ car.model_name }}</h2>
 
                 <div class="row">
                     <div class="col-md-6">
@@ -825,17 +892,19 @@ $(document).ready(function() {
                       <span aria-hidden="true" style="color: white;">&times;</span>
                   </button>
               </div>
-              <div class="modal-body">
-                  <div id="chat-messages" style="height: 300px; overflow-y: auto; padding: 10px;">
+              <div class="modal-body" style="background: #f8f9fa; padding: 0;">
+                  <div id="chat-messages">
                       <!-- Messages will be displayed here -->
                   </div>
-                  <div class="input-group mt-3">
-                      <input type="text" id="message-input" class="form-control" placeholder="Type your message...">
-                      <div class="input-group-append">
-                          <button class="btn btn-primary" type="button" id="send-message" 
-                                  style="background: #d39e00 !important; border-color: #d39e00 !important;">
-                              <i class="fas fa-paper-plane"></i>
-                          </button>
+                  <div class="chat-input-container p-3">
+                      <div class="input-group">
+                          <input type="text" id="message-input" class="form-control" placeholder="Type your message...">
+                          <div class="input-group-append">
+                              <button class="btn" type="button" id="send-message" 
+                                      style="background: #000000; border-color: #000000;">
+                                  <i class="fas fa-paper-plane" style="color: white;"></i>
+                              </button>
+                          </div>
                       </div>
                   </div>
               </div>
@@ -843,62 +912,31 @@ $(document).ready(function() {
       </div>
   </div>
 
-  <!-- Update the JavaScript -->
+  <!-- Update the JavaScript for chat functionality -->
   <script>
   $(document).ready(function() {
       const carId = '{{ car.id }}';
       const currentUser = '{{ user.username }}';
-      const carOwner = '{{ car.user.username }}';
       let isFirstMessage = true;
 
-      // Handle Chat Now button click
       $('#chatNowBtn').click(function() {
           $('#chatModal').modal('show');
           loadChatMessages();
       });
 
-      function loadChatMessages() {
-          $.ajax({
-              url: `/get-chat-messages/${carId}/`,
-              method: 'GET',
-              success: function(response) {
-                  const chatMessages = $('#chat-messages');
-                  chatMessages.empty();
-                  
-                  if (response.messages.length === 0 && isFirstMessage) {
-                      // Send automatic first message
-                      sendMessage("Hi, is this car still available?", true);
-                      isFirstMessage = false;
-                  } else {
-                      response.messages.forEach(message => {
-                          displayMessage(message.content, message.sender, message.timestamp);
-                      });
-                  }
-                  
-                  scrollToBottom();
-              }
-          });
-      }
-
       function displayMessage(message, sender, timestamp) {
           const chatMessages = $('#chat-messages');
-          const messageClass = sender === currentUser ? 'sender-message' : 'receiver-message';
-          const alignment = sender === currentUser ? 'right' : 'left';
-          const backgroundColor = sender === currentUser ? '#d39e00' : '#f0f0f0';
-          const textColor = sender === currentUser ? 'white' : 'black';
-
+          const isSentMessage = sender === currentUser;
+          
           const messageHtml = `
-              <div class="chat-message" style="margin-bottom: 10px; max-width: 80%; margin-${alignment}: auto;">
-                  <div style="background-color: ${backgroundColor}; color: ${textColor}; 
-                              padding: 8px 12px; border-radius: 15px; word-wrap: break-word;">
-                      <div class="message-content">${message}</div>
-                      <div style="font-size: 0.75rem; color: ${sender === currentUser ? '#fff' : '#666'}; 
-                                  text-align: right; margin-top: 2px;">
-                          ${timestamp}
+              <div class="message-row ${isSentMessage ? 'sent' : 'received'}">
+                  <div class="message-content">
+                      <div class="message-bubble">
+                          ${message}
                       </div>
                   </div>
-                  <div style="font-size: 0.8rem; color: #666; margin-top: 2px; text-align: ${alignment};">
-                      ${sender}
+                  <div class="message-info">
+                      ${isSentMessage ? 'You' : sender} • ${timestamp}
                   </div>
               </div>
           `;
@@ -934,7 +972,6 @@ $(document).ready(function() {
                           response.message.sender,
                           response.message.timestamp
                       );
-                      scrollToBottom();
                   }
               });
           }
@@ -952,9 +989,42 @@ $(document).ready(function() {
           }
       });
 
+      function loadChatMessages() {
+          $.ajax({
+              url: `/get-chat-messages/${carId}/`,
+              method: 'GET',
+              success: function(response) {
+                  const chatMessages = $('#chat-messages');
+                  chatMessages.empty();
+                  
+                  if (response.messages.length === 0 && isFirstMessage) {
+                      sendMessage("Hi, is this car still available?", true);
+                      isFirstMessage = false;
+                  } else {
+                      response.messages.forEach(message => {
+                          displayMessage(message.content, message.sender, message.timestamp);
+                      });
+                  }
+                  
+                  scrollToBottom();
+              }
+          });
+      }
+
       // Refresh messages periodically
       setInterval(loadChatMessages, 5000);
+
+      // Add click handler for message highlighting
+      $(document).on('click', '.message-bubble', function() {
+          $(this).css('filter', 'brightness(90%)');
+          setTimeout(() => {
+              $(this).css('filter', '');
+          }, 200);
+      });
   });
   </script>
+
+  <!-- Add Font Awesome for the send icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   </body>
 </html>
