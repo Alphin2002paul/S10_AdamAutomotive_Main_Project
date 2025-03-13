@@ -3762,7 +3762,8 @@ def get_chat_history(request):
                     'car_id': chat.car_id,
                     'car_details': f"{chat.car.manufacturer} {chat.car.model_name}",
                     'messages': [],
-                    'unread_count': unread_count  # Add unread count
+                    'unread_count': unread_count,
+                    'is_sender': chat.car.user != request.user  # True if user is enquiring about the car
                 }
             
             chat_history[chat.car_id]['messages'].append({

@@ -85,9 +85,6 @@
         color: #020202;
         outline: none !important;
     }
-    .modal-custom-size {
-        max-width: 400px; /* Adjust this value as needed */
-    }
     </style>
   </head>
 
@@ -817,7 +814,7 @@ $(document).ready(function() {
 
   <!-- Update the chat modal -->
   <div class="modal fade" id="chatModal" tabindex="-1" role="dialog" aria-labelledby="chatModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-custom-size" role="document">
+      <div class="modal-dialog" role="document">
           <div class="modal-content">
               <div class="modal-header" style="background: #000;">
                   <h5 class="modal-title" id="chatModalLabel">
@@ -840,27 +837,6 @@ $(document).ready(function() {
                               <i class="fas fa-paper-plane"></i>
                           </button>
                       </div>
-                  </div>
-              </div>
-          </div>
-      </div>
-  </div>
-
-  <!-- Update the chat history modal -->
-  <div class="modal fade" id="chatHistoryModal" tabindex="-1" role="dialog" aria-labelledby="chatHistoryModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-custom-size" role="document">
-          <div class="modal-content">
-              <div class="modal-header" style="background: #000;">
-                  <h5 class="modal-title" id="chatHistoryModalLabel">
-                      <span style="color: #999999;">Chat History</span>
-                  </h5>
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                      <span aria-hidden="true" style="color: white;">&times;</span>
-                  </button>
-              </div>
-              <div class="modal-body">
-                  <div id="chat-history" style="height: 300px; overflow-y: auto; padding: 10px;">
-                      <!-- Chat history will be displayed here -->
                   </div>
               </div>
           </div>
