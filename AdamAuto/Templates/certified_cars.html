@@ -1822,13 +1822,16 @@
 
                         <!-- Right Side - Chat Area -->
                         <div class="col-md-8 h-100 d-flex flex-column">
-                            <div id="selectedChatMessages" class="flex-grow-1" style="overflow-y: auto; padding: 20px;">
+                            <!-- Messages container with fixed height and scrolling -->
+                            <div id="selectedChatMessages" class="flex-grow-1 messages-container">
                                 <div class="initial-message text-center text-muted">
                                     <i class="fas fa-comments fa-3x mb-3"></i>
                                     <p>Select a conversation to start messaging</p>
                                 </div>
                             </div>
-                            <div id="messageInputContainer" class="p-3 border-top" style="display: none;">
+                            
+                            <!-- Fixed input container at bottom -->
+                            <div id="messageInputContainer" class="message-input-fixed">
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="newMessageInput" placeholder="Type a message...">
                                     <div class="input-group-append">
@@ -1845,39 +1848,121 @@
         </div>
     </div>
 
-    <!-- Add these styles -->
+    <!-- Add these updated styles -->
     <style>
-    .chat-sections {
-        height: calc(100% - 71px);
+    /* Chat container styles */
+    .messages-container {
+        height: calc(100vh - 250px); /* Adjust height to leave space for input */
         overflow-y: auto;
+        padding: 20px;
+        background-color: #ffffff;
+        display: flex;
+        flex-direction: column;
     }
 
-    .chat-section {
-        border-bottom: 1px solid #eee;
+    /* Scrollbar styling */
+    .messages-container::-webkit-scrollbar {
+        width: 6px;
     }
 
-    .section-header {
-        background-color: #f8f9fa;
-        padding: 10px;
-        font-weight: 500;
+    .messages-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
     }
 
-    .section-header h6 {
-        color: #495057;
-        margin: 0;
+    .messages-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
     }
 
-    .contact-item {
-        padding: 12px 15px;
-        border-bottom: 1px solid #eee;
+    .messages-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
     }
 
-    .contact-item:last-child {
-        border-bottom: none;
+    /* Fixed input container */
+    .message-input-fixed {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 15px;
+        border-top: 1px solid #dee2e6;
+        z-index: 1000;
+    }
+
+    /* Existing message styles */
+    .message {
+        display: flex;
+        flex-direction: column;
+        margin: 8px 0;
+        max-width: 70%;
+    }
+
+    .message.sent {
+        align-self: flex-end;
+        margin-left: auto;
+    }
+
+    .message.received {
+        align-self: flex-start;
+        margin-right: auto;
+    }
+
+    .message-content {
+        padding: 10px 15px;
+        border-radius: 15px;
+        margin-bottom: 4px;
+        word-wrap: break-word;
+    }
+
+    .message.sent .message-content {
+        background-color: #000000;
+        color: white;
+        border-radius: 15px 15px 0 15px;
+    }
+
+    .message.received .message-content {
+        background-color: #f0f0f0;
+        color: #333;
+        border-radius: 15px 15px 15px 0;
+    }
+
+    .message-time {
+        font-size: 11px;
+        color: #666;
+        margin-top: 2px;
+    }
+
+    .message.sent .message-time {
+        text-align: right;
+    }
+
+    /* Input styling */
+    #newMessageInput {
+        border-radius: 20px;
+        padding: 8px 15px;
+        border: 1px solid #dee2e6;
+    }
+
+    #sendMessageBtn {
+        border-radius: 20px;
+        padding: 8px 20px;
+        background-color: #000000;
+        color: white;
+        margin-left: 8px;
+    }
+
+    /* Modal body height */
+    .modal-content {
+        height: 80vh; /* Adjust modal height */
+    }
+
+    .modal-body {
+        padding: 0;
+        overflow: hidden;
     }
     </style>
 
-    <!-- Update the JavaScript -->
+    <!-- Update the JavaScript for scrolling -->
     <script>
     $(document).ready(function() {
         let activeCarId = null;
@@ -2041,6 +2126,10 @@
                         
                         $('#selectedChatMessages').html(messagesHtml);
                         $('#selectedChatMessages').scrollTop($('#selectedChatMessages')[0].scrollHeight);
+                        
+                        // Scroll to bottom after rendering messages
+                        const messagesContainer = document.getElementById('selectedChatMessages');
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
                     } else {
                         $('#selectedChatMessages').html(`
                             <div class="text-center p-4 text-danger">
@@ -2108,6 +2197,7 @@
                         // Refresh both messages and contacts to update unread counts
                         loadChatMessages(activeCarId);
                         loadContacts();
+                        scrollToBottom();
                     } else {
                         $('.sending').text('Failed to send');
                     }
@@ -2127,6 +2217,12 @@
             });
         });
     });
+
+    // Add this function to scroll to bottom when sending new messages
+    function scrollToBottom() {
+        const messagesContainer = document.getElementById('selectedChatMessages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
     </script>
 </body>
 </html>
